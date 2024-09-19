@@ -1,0 +1,40 @@
+IMAGE := "marciclabas/so2"
+VERSION := "0.0.0"
+NAME := "container"
+
+set dotenv-load
+
+help:
+	@just --list
+
+build *PARAMS:
+	docker build -t {{IMAGE}}:{{VERSION}} . --progress=plain {{PARAMS}}
+	@just tag
+
+tag:
+	docker tag {{IMAGE}}:{{VERSION}} {{IMAGE}}:latest
+
+push:
+	docker push {{IMAGE}}:{{VERSION}}
+
+run: kill
+	docker run -dp 8000:80 -p 2222:2222 \
+		-v /tmp/.X11-unix:/tmp/.X11-unix \
+		-e DISPLAY=$DISPLAY \
+		--name {{NAME}} \
+		{{IMAGE}}:{{VERSION}}
+
+ssh:
+	docker exec -it {{NAME}} /bin/bash
+
+kill:
+	docker rm -f {{NAME}}
+
+up:
+	docker compose up -d
+
+down:
+	docker compose down
+
+compose-ssh:
+	docker compose exec {{NAME}} /bin/bash
