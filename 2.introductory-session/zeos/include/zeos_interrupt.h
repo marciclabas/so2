@@ -1,4 +1,4 @@
-#include "sched.h"
+#include <sched.h>
 
 void zeos_show_clock();
 

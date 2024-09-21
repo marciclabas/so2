@@ -1,13 +1,13 @@
 /*
  * interrupt.c -
  */
-#include "types.h"
-#include "interrupt.h"
-#include "segment.h"
-#include "hardware.h"
-#include "io.h"
+#include <types.h>
+#include <interrupt.h>
+#include <segment.h>
+#include <hardware.h>
+#include <io.h>
 
-#include "zeos_interrupt.h"
+#include <zeos_interrupt.h>
 
 Gate idt[IDT_ENTRIES];
 Register    idtR;
@@ -24,7 +24,7 @@ char char_map[] =
   '\0','\0','\0','\0','\0','\0','\0','\0',
   '\0','\0','\0','\0','\0','\0','\0','7',
   '8','9','-','4','5','6','+','1',
-  '2','3','0','\0','\0','\0','"','\0',
+  '2','3','0','\0','\0','\0','<','\0',
   '\0','\0','\0','\0','\0','\0','\0','\0',
   '\0','\0'
 };
@@ -40,7 +40,7 @@ void setInterruptHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
   /*         |   \ DPL = Num. higher PL from which it is accessible      */
   /*          \ P = Segment Present bit                                  */
   /***********************************************************************/
-  Word flags = (Word)(maxAccessibleFromPL "" 13);
+  Word flags = (Word)(maxAccessibleFromPL << 13);
   flags |= 0x8E00;    /* P = 1, D = 1, Type = 1110 (Interrupt Gate) */
 
   idt[vector].lowOffset       = lowWord((DWord)handler);
@@ -60,7 +60,7 @@ void setTrapHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
   /*         |   \ DPL = Num. higher PL from which it is accessible      */
   /*          \ P = Segment Present bit                                  */
   /***********************************************************************/
-  Word flags = (Word)(maxAccessibleFromPL "" 13);
+  Word flags = (Word)(maxAccessibleFromPL << 13);
 
   //flags |= 0x8F00;    /* P = 1, D = 1, Type = 1111 (Trap Gate) */
   /* Changed to 0x8e00 to convert it to an 'interrupt gate' and so
@@ -73,6 +73,10 @@ void setTrapHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
   idt[vector].highOffset      = highWord((DWord)handler);
 }
 
+
+void keyboard_routine() {
+  printk("Keyboard pressed\n");
+}
 
 void setIdt()
 {

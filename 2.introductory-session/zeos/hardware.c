@@ -3,7 +3,7 @@
  */
 
 
-#include "types.h"
+#include <types.h>
 
 extern unsigned int *p_rdtr ;
 DWord get_eflags(void)
@@ -91,8 +91,8 @@ void return_gate(Word ds, Word ss, DWord esp, Word cs, DWord eip)
  *    bit 7 : Reserved
  * 
  *
- *   x = 0 -" enabled
- *   x = 1 -" disabled
+ *   x = 0 -> enabled
+ *   x = 1 -> disabled
  */
 
 void enable_int(void)
@@ -103,7 +103,7 @@ __asm__ __volatile__(
   "call delay\n\t"
   "sti"
   : /*no output*/
-  : "i" (0xff)       /* 0xFF = 11111111 -" all bits disabled */
+  : "i" (0xff)       /* 0xFF = 11111111 -> all bits disabled */
   : "%al" );
 }
 
