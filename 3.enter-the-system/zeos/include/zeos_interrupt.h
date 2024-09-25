@@ -16,11 +16,12 @@ void invalid_tss_routine();
 void segment_not_present_routine();
 void stack_exception_routine();
 void general_protection_routine();
-void page_fault_routine();
+void page_fault_routine2(int addr);
 void intel_reserved_routine();
 void floating_point_error_routine();
 void alignment_check_routine();
 
 void keyboard_routine();
+void clock_routine();
 
 void set_handlers();

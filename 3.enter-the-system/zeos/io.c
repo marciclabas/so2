@@ -65,6 +65,15 @@ void print_bits(int value, char * output, int size) {
   output[size] = '\0';
 }
 
+void print_hex(int value, char * output, int size) {
+  for (int i = 0; i < size; i++) {
+    int digit = value & 0xf;
+    output[size-i-1] = digit < 10 ? digit + '0' : digit - 10 + 'A';
+    value >>= 4;
+  }
+  output[size] = '\0';
+}
+
 void printk(char *string)
 {
   int i;

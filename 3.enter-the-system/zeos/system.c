@@ -54,6 +54,8 @@ inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp)
 
 }
 
+int zeos_ticks = 0;
+
 /*
  *   Main entry point to ZEOS Operating System
  */

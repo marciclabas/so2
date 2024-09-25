@@ -3,10 +3,28 @@
  */
 
 #include <libc.h>
-
 #include <types.h>
+#include <errs.h>
 
 int errno;
+
+const char * const err_msg[] = {
+  [EBADF] = "Bad file number",
+  [EACCES] = "Permission denied",
+  [EFAULT] = "Bad address",
+  [EINVAL] = "Invalid argument",
+  [ENOSYS] = "Function not implemented",
+};
+
+void perror() {
+  if (errno < 0) {
+    write(1, "\nError: ", 9);
+    write(1, err_msg[errno], strlen(err_msg[errno]));
+  }
+  else {
+    write(1, "No error\n", 10);
+  }
+}
 
 void itoa(int a, char *b)
 {

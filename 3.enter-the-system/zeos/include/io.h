@@ -15,5 +15,6 @@ void printc(char c);
 void printc_xy(Byte x, Byte y, char c);
 void printk(char *string);
 void print_bits(int value, char * output, int size);
+void print_hex(int value, char * output, int size);
 
 #endif  /* __IO_H__ */

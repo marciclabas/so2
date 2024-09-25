@@ -6,6 +6,8 @@
 #include <segment.h>
 #include <hardware.h>
 #include <io.h>
+#include <system.h>
+#include <libc.h>
 
 #include <zeos_interrupt.h>
 
@@ -75,25 +77,32 @@ void setTrapHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 
 void keyboard_routine() {
   printk("Keyboard: (");
-  unsigned char x = inb(0x60);
-  char buffer[8];
-  print_bits(x, buffer, 8);
-  printk(buffer);
-  printk(") -> ");
+  unsigned char inp = inb(0x60);
 
-  int keyup = x & 0x80;
+  int keyup = inp & 0x80;
   if (!keyup) {
-    char c = char_map[x];
-    if (c != '\0') {
+    char c = char_map[inp];
+    if (c != '\0')
       printc(c);
-    }
   }
-  else {
+  else
     printk("Key up");
-  }
   printk("\n");
 }
 
+void clock_routine() {
+  zeos_ticks++;
+  zeos_show_clock();
+}
+
+void page_fault_routine2(int addr) {
+  char str_addr[8];
+  print_hex(addr, str_addr, 8);
+  printk("Page fault at address: 0x");
+  printk(str_addr);
+  printk("\n");
+  while (1);
+}
 
 void setIdt()
 {
@@ -105,6 +114,8 @@ void setIdt()
 
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
   setInterruptHandler(33, keyboard_handler, 0);
+  setInterruptHandler(32, clock_handler, 0);
+  setInterruptHandler(14, page_fault_handler2, 0);
   setTrapHandler(0x80, system_call_handler, 3);
 
   set_idt_reg(&idtR);

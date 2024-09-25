@@ -7,6 +7,17 @@
 # 1 "include/asm.h" 1
 # 2 "wrappers.S" 2
 
+.extern errno
+# 12 "wrappers.S"
+return:
+  cmpl $0, %eax
+  jge end
+  negl %eax
+  movl %eax, errno
+  movl $-1, %eax
+end:
+  ret
+
 .globl write; .type write, @function; .align 0; write:
 
   movl 4(%esp), %edx
@@ -14,9 +25,11 @@
   movl 12(%esp), %ebx
   movl $4, %eax
   int $0x80
+  call return
+  ret
 
-  cmpl $0, %eax
-  jge end
-  movl $-1, %eax
-end:
+.globl gettime; .type gettime, @function; .align 0; gettime:
+  movl $10, %eax
+  int $0x80
+  call return
   ret
