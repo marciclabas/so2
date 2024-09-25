@@ -45,3 +45,17 @@ int sys_fork()
 void sys_exit()
 {  
 }
+
+
+int sys_write(int fd, char * buffer, int size) {
+  int fd_status = check_fd(fd, ESCRIPTURA);
+  if (fd_status < 0) return fd_status;
+  if (buffer == NULL) return -14; /*EFAULT*/
+  if (size < 0) return -22; /*EINVAL*/
+
+  char sys_buffer[size];
+  int status = copy_from_user(buffer, sys_buffer, size);
+  if (status < 0) return status;
+
+  return sys_write_console(sys_buffer, size);
+}
