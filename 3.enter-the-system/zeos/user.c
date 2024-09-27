@@ -12,8 +12,8 @@ int __attribute__ ((__section__(".text.main")))
   write(1, "Hello fellas\n", 13);
   perror();
 
-  char * c = 0;
-  c = 'n';
+  char * c = 0x33;
+  *c = 'n';
   write(1, &c, 1);
 
   while(1) {}

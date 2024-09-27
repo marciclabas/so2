@@ -60,3 +60,8 @@ ENTRY(<name>_handler)
 - service routine?: `sys.c`
 - handler: `entry.S`
 - IDT <- handler
+
+### Fast Syscalls
+
+- Init MSR at the start
+- Set MSR_ESP within each wrapper <-- TSS.esp0

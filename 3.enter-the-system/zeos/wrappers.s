@@ -20,11 +20,13 @@ end:
 
 .globl write; .type write, @function; .align 0; write:
 
-  movl 4(%esp), %edx
-  movl 8(%esp), %ecx
-  movl 12(%esp), %ebx
+  pushl %ebx
+  movl 8(%ebp), %edx
+  movl 12(%ebp), %ecx
+  movl 16(%ebp), %ebx
   movl $4, %eax
   int $0x80
+  popl %ebx
   call return
   ret
 

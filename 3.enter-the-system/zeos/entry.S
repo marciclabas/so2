@@ -17,9 +17,6 @@
 /**                                              **/
 /** Stack layout in 'systemCall':                **/
 /**                                              **/
-
-/** missing @ret!? (ADDRESSES ARE MISSING +4)
-
 /**   0(%esp) - %edx    \                        **/
 /**   4(%esp) - %ecx     |                       **/
 /**   8(%esp) - %ebx     |                       **/
@@ -91,7 +88,12 @@ ENTRY(clock_handler)
 ENTRY(page_fault_handler2)
   SAVE_ALL
   EOI
+  // %cr2 contains the address that caused the fault
+  // push it as a param to the page_fault_routine2
+  movl %cr2, %eax
+  pushl %eax
   call page_fault_routine2;
+  addl $4, %esp
   RESTORE_ALL
   iret;
 

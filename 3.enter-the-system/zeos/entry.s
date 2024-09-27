@@ -14,7 +14,7 @@
 # 7 "entry.S" 2
 # 1 "include/errs.h" 1
 # 8 "entry.S" 2
-# 77 "entry.S"
+# 74 "entry.S"
 .globl keyboard_handler; .type keyboard_handler, @function; .align 0; keyboard_handler:
   pushl %gs; pushl %fs; pushl %es; pushl %ds; pushl %eax; pushl %ebp; pushl %edi; pushl %esi; pushl %ebx; pushl %ecx; pushl %edx; movl $0x18, %edx; movl %edx, %ds; movl %edx, %es;
   movb $0x20, %al ; outb %al, $0x20 ;
@@ -32,7 +32,12 @@
 .globl page_fault_handler2; .type page_fault_handler2, @function; .align 0; page_fault_handler2:
   pushl %gs; pushl %fs; pushl %es; pushl %ds; pushl %eax; pushl %ebp; pushl %edi; pushl %esi; pushl %ebx; pushl %ecx; pushl %edx; movl $0x18, %edx; movl %edx, %ds; movl %edx, %es;
   movb $0x20, %al ; outb %al, $0x20 ;
+
+
+  movl %cr2, %eax
+  pushl %eax
   call page_fault_routine2;
+  addl $4, %esp
   popl %edx; popl %ecx; popl %ebx; popl %esi; popl %edi; popl %ebp; popl %eax; popl %ds; popl %es; popl %fs; popl %gs;
   iret;
 
