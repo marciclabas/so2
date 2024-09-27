@@ -3,7 +3,7 @@
 .extern errno
 
 /**
-  if (eax < 0)
+  if eax < 0
     errno = -eax
     return -1
   else
@@ -20,11 +20,13 @@ end:
 
 ENTRY(write)
   // parameters: fd, buffer, size -> %edx, %ecx, %ebx
-  movl 4(%esp), %edx
-  movl 8(%esp), %ecx
-  movl 12(%esp), %ebx
+  pushl %ebx // C convention: only %ebx, %esi, %edi are callee-saved if used
+  movl 8(%ebp), %edx
+  movl 12(%ebp), %ecx
+  movl 16(%ebp), %ebx
   movl $4, %eax 
   int $0x80
+  popl %ebx
   call return
   ret
 
