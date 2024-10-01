@@ -17,12 +17,13 @@ const char * const err_msg[] = {
 };
 
 void perror() {
-  if (errno < 0) {
+  if (errno > 0) {
     write(1, "\nError: ", 9);
     write(1, err_msg[errno], strlen(err_msg[errno]));
+    write(1, "\n", 1);
   }
   else {
-    write(1, "No error\n", 10);
+    write(1, "\nNo error\n", 11);
   }
 }
 

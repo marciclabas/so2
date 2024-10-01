@@ -87,7 +87,7 @@ void keyboard_routine() {
   }
   else
     printk("Key up");
-  printk("\n");
+  printk(")\n");
 }
 
 void clock_routine() {

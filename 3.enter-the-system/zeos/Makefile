@@ -106,9 +106,17 @@ disk: zeos.bin
 emul: zeos.bin
 	bochs -q -f .bochsrc
 
+bochs:
+	bochs -q -f .bochsrc_gdb
+
 gdb: zeos.bin
 	bochs -q -f .bochsrc_gdb &
 	gdb -x .gdbcmd system
 
 emuldbg: zeos.bin
 	bochs_nogdb -q -f .bochsrc
+
+# objdump things
+dump: all
+	objdump -d system > ../system.objdump
+	objdump -d user > ../user.objdump

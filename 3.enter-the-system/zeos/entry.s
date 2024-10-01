@@ -69,12 +69,46 @@
   jg sysenter_err
   call *sys_call_table(, %EAX, 0x04)
   jmp sysenter_fin
-  sysenter_err:
+sysenter_err:
   movl $-38, %EAX
-  sysenter_fin:
+sysenter_fin:
   movl %EAX, 0x18(%ESP)
   popl %edx; popl %ecx; popl %ebx; popl %esi; popl %edi; popl %ebp; popl %eax; popl %ds; popl %es; popl %fs; popl %gs;
   movl (%ESP), %EDX
   movl 12(%ESP), %ECX
   sti
   sysexit
+
+
+.globl write_msr; .type write_msr, @function; .align 0; write_msr:
+  movl 4(%esp), %ecx
+  movl 8(%esp), %eax
+  movl $0, %edx
+
+  wrmsr
+
+  ret
+
+.extern task
+
+
+
+
+.globl init_msrs; .type init_msrs, @function; .align 0; init_msrs:
+  pushl $0x10
+  pushl $0x174
+  call write_msr
+  addl $8, %esp
+
+  movl $task + 1024, %eax
+  pushl %eax
+  pushl $0x175
+  call write_msr
+  addl $8, %esp
+
+  pushl $syscall_handler_sysenter
+  pushl $0x176
+  call write_msr
+  addl $8, %esp
+
+  ret

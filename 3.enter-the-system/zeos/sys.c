@@ -9,6 +9,7 @@
 #include <sched.h>
 #include <errs.h>
 #include <system.h>
+#include <libc.h>
 
 #define LECTURA 0
 #define ESCRIPTURA 1
@@ -47,15 +48,20 @@ int sys_gettime() {
   return zeos_ticks;
 }
 
-int sys_write(int fd, char * buffer, int size) {
-  int fd_status = check_fd(fd, ESCRIPTURA);
-  if (fd_status < 0) return fd_status;
+int check_params(int fd, char * buffer, int size) {
+  if (fd != 1) return -EBADF;
   if (buffer == NULL) return -EFAULT;
   if (size < 0) return -EINVAL;
+  return 0;
+}
+
+int sys_write(int fd, char * buffer, int size) {
+  int status = check_params(fd, buffer, size);
+  if (status < 0) return status;
 
   char sys_buffer[size];
-  int status = copy_from_user(buffer, sys_buffer, size);
-  if (status < 0) return status;
+  int copy_status = copy_from_user(buffer, sys_buffer, size);
+  if (copy_status < 0) return copy_status;
 
   return sys_write_console(sys_buffer, size);
 }

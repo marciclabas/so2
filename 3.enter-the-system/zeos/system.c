@@ -100,9 +100,11 @@ int __attribute__((__section__(".text.main")))
   copy_data((void *) KERNEL_START + *p_sys_size, (void*)L_USER_START, *p_usr_size);
 
 
-  printk("Entering user mode...");
+  printk("Entering user mode...\n");
 
   enable_int();
+  init_msrs();
+
   /*
    * We return from a 'theorical' call to a 'call gate' to reduce our privileges
    * and going to execute 'magically' at 'usr_main'...

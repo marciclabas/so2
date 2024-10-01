@@ -11,4 +11,6 @@ extern int zeos_ticks;
 extern TSS         tss;
 extern Descriptor* gdt;
 
+void init_msrs();
+
 #endif  /* __SYSTEM_H__ */
