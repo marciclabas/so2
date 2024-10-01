@@ -1,67 +1,30 @@
-# 3. Enter the System
+# ZeOS Part 3 - Mechanisms to Enter the System
 
-## Conventions
+## Changelog
 
-e.g. `<name> = write`
+### 3.10.1 Complete ZeOS Code
+- Added `RESTORE_ALL` to `entry.S`
+- Added `EOI` to `entry.S`
 
-### Handler
-- Assembly code: `entry.S:<name>_handler`, e.g. `syscall_handler`
-- Header: `include/interrupt.h`
-- Onto the IDT: `setInterruptHandler(<num>, <name>_handler, priv_level)` in `interrupt.c`
+### 3.10.2 Keyboard Interrupt
+- Interrupt Service Routine (ISR): added `keyboard_routine` to `interrupt.c`, `zeos_interrupt.h`
+- Interrupt handler: added `keyboard_handler` to `entry.S`, `interrupt.h`
+- Initialize IDT: added `setInterruptHandler(33, keyboard_handler, 0);` to `interrupt.c`
+- Enable interrupt: set flag to 0 in `hardware.c:enable_int`
 
-```assembly
-ENTRY(<name>_handler)
-  SAVE_ALL
-  EOI
-  call <name>_routine;
-  RESTORE_ALL
-  iret;
-```
+### 3.10.3 Write Syscall
 
-- Masked interrupt enable: change mask in `hardware.c:enable_int`
+**A) Interrupt mechanism**
+- Routine: added `sys_write` to `sys.c`
+- Sycall table: `sys_call_table[4] = sys_write` in `sys_call_table.S`
+- Wrapper: added `write_int` to `wrappers.S` (new file), `libc.h`
+- Syscall handler: added `system_call_handler` to `entry.S`
+- Initialize IDT: added `setTrapHandler(0x80, system_call_handler, 3);` to `interrupt.c`
+- `errno`: added code to set `errno` in `wrappers.S` (per wrapper)
+- `perror`: added `perror` to `lib.c/h`
 
-### Interrupt Service Routines, ISRs - Interrupt only
-- C code: `interrupt.c:<name>_routine`, e.g. `clock_routine`
-- Header: `include/zeos_interrupt.h`
-- Called from `<name>_handler`
-
-### Service Routines - System calls
-- C code: `sys.c:sys_<name>`, e.g. `sys_write`
-- Called from `syscall_handler`, using the syscall table
-
-### Wrappers
-- Assembly code: `wrappers.S:<name>`, e.g. `write`
-- Header: `include/libc.h`
-
-## TODO
-
-#### 3.10.1
-- RESTORE_ALL: ok
-- EOI: ok
-
-#### 3.10.2 Keyboard mgmt
-- ISR: `ìnterrupt.c/zeos_interrupt.h: keyboard_routine` ok
-- Handler: `entry.S/interrupt.h: keyboard_handler` ok
-- IDT <- handler: `interrupt.c: setInterruptHandler(33, keyboard_handler, 0);`ok
-- Enable interrupt: `hardware.c: enable_int, 0xfd` ok
-
-#### 3.10.3 write syscall
-
-- `sys_write` (ISR): `sys.c` ok
-- sys_call_table <- sys_write: `sys_call_table.S` ok
-- `write` wrapper: `wrappers.S` ok
-- `system_call_handler` : `entry.S` ok
-- IDT <- handler: `interrupt.c` ok
-- MSR <- handler
-- `errno`, `perror`
-
-#### 3.10.4 Clock
-
-- service routine?: `sys.c`
-- handler: `entry.S`
-- IDT <- handler
-
-### Fast Syscalls
-
-- Init MSR at the start
-- Set MSR_ESP within each wrapper <-- TSS.esp0
+**B) Fast syscall mechanism**
+- Init MSRs: added `init_msrs` to `entry.S`, `system.h`. Called from `system.c:main`
+- Added `syscall_handler_sysenter` to `entry.S`
+- Added `write_msr`, `init_msrs` to `entry.S`
+- Added `write` to `wrappers.S`, `libc.h`
