@@ -49,13 +49,13 @@ ENTRY(write)
   pushl %ecx // why would we need to save these though?
   pushl %edx
 
-  pushl $after
+  pushl $after_write
 
   pushl %ebp
   movl %esp, %ebp
   sysenter
 
-after:
+after_write:
   popl %ebp
   addl $4, %esp // popl $after
   popl %edx
@@ -65,7 +65,22 @@ after:
   ret
 
 ENTRY(gettime)
-  // movl $10, %eax
-  // int $0x80
-  // call return
-  // ret
+  movl $10, %eax
+
+  pushl %ecx
+  pushl %edx
+
+  pushl $after_gettime
+
+  pushl %ebp
+  movl %esp, %ebp
+  sysenter
+
+after_gettime:
+  popl %ebp
+  addl $4, %esp // popl $after
+  popl %edx
+  popl %ecx
+  call set_errno_eax
+
+  ret

@@ -49,13 +49,13 @@ end:
   pushl %ecx
   pushl %edx
 
-  pushl $after
+  pushl $after_write
 
   pushl %ebp
   movl %esp, %ebp
   sysenter
 
-after:
+after_write:
   popl %ebp
   addl $4, %esp
   popl %edx
@@ -65,3 +65,22 @@ after:
   ret
 
 .globl gettime; .type gettime, @function; .align 0; gettime:
+  movl $10, %eax
+
+  pushl %ecx
+  pushl %edx
+
+  pushl $after_gettime
+
+  pushl %ebp
+  movl %esp, %ebp
+  sysenter
+
+after_gettime:
+  popl %ebp
+  addl $4, %esp
+  popl %edx
+  popl %ecx
+  call set_errno_eax
+
+  ret
