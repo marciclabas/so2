@@ -18,7 +18,8 @@ set_errno_eax:
 end:
   ret
 
-ENTRY(write_int)
+/** Interrupt-based write
+ENTRY(write)
   pushl %ebx
   // parameters: fd, buffer, size -> %edx, %ecx, %ebx
   // 0(esp) is @ret
@@ -35,6 +36,7 @@ ENTRY(write_int)
   call set_errno_eax
 
   ret
+*/
 
 
 ENTRY(write)
