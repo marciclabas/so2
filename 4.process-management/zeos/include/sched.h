@@ -14,13 +14,15 @@
 
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 
-struct task_struct {
+typedef struct {
   int PID;			/* Process ID. This MUST be the first field of the struct. */
   page_table_entry * dir_pages_baseAddr;
-};
+  DWord kernel_esp;
+  list_head list;
+} task_struct;
 
 union task_union {
-  struct task_struct task;
+  task_struct task;
   unsigned long stack[KERNEL_STACK_SIZE];    /* pila de sistema, per procés */
 };
 
@@ -42,7 +44,7 @@ struct task_struct * current();
 
 void task_switch(union task_union*t);
 
-struct task_struct *list_head_to_task_struct(struct list_head *l);
+struct task_struct *list_head_to_task_struct(list_head *l);
 
 int allocate_DIR(struct task_struct *t);
 
@@ -52,7 +54,7 @@ page_table_entry * get_DIR (struct task_struct *t) ;
 
 /* Headers for the scheduling policy */
 void sched_next_rr();
-void update_process_state_rr(struct task_struct *t, struct list_head *dest);
+void update_process_state_rr(struct task_struct *t, list_head *dest);
 int needs_sched_rr();
 void update_sched_data_rr();
 
