@@ -1,10 +1,9 @@
 #ifndef _LINUX_LIST_H
 #define _LINUX_LIST_H
 
-struct list_head {
-	struct list_head *next, *prev;
-};
-typedef struct list_head list_head;
+typedef struct list_head {
+	list_head *next, *prev;
+} list_head;
 
 /*
  * Simple doubly linked list implementation.
