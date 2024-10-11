@@ -1,9 +1,9 @@
 #ifndef _LINUX_LIST_H
 #define _LINUX_LIST_H
 
-struct list_head {
-	struct list_head *next, *prev;
-};
+typedef struct list_head {
+	list_head *next, *prev;
+} list_head;
 
 /*
  * Simple doubly linked list implementation.
@@ -52,7 +52,7 @@ struct list_head {
  * INIT_LIST_HEAD - Initializes an empty list.
  * @head: list head to initialize
  */
-void INIT_LIST_HEAD(struct list_head *head);
+void INIT_LIST_HEAD(list_head *head);
 
 /**
  * list_add - add a new entry
@@ -62,7 +62,7 @@ void INIT_LIST_HEAD(struct list_head *head);
  * Insert a new entry after the specified head.
  * This is good for implementing stacks.
  */
-void list_add(struct list_head *new, struct list_head *head);
+void list_add(list_head *new, list_head *head);
 
 
 /**
@@ -73,7 +73,7 @@ void list_add(struct list_head *new, struct list_head *head);
  * Insert a new entry before the specified head.
  * This is useful for implementing queues.
  */
-void list_add_tail(struct list_head *new, struct list_head *head);
+void list_add_tail(list_head *new, list_head *head);
 
 /**
  * list_del - deletes entry from list.
@@ -81,21 +81,20 @@ void list_add_tail(struct list_head *new, struct list_head *head);
  * Note: list_empty() on entry does not return true after this, the entry is
  * in an undefined state.
  */
-void list_del(struct list_head *entry);
+void list_del(list_head *entry);
 
 /**
  * list_is_last - tests whether @list is the last entry in list @head
  * @list: the entry to test
  * @head: the head of the list
  */
-int list_is_last(const struct list_head *list,
-				const struct list_head *head);
+int list_is_last(const list_head *list, const list_head *head);
 
 /**
  * list_empty - tests whether a list is empty
  * @head: the list to test.
  */
-int list_empty(const struct list_head *head);
+int list_empty(const list_head *head);
 
 /**
  * list_entry - get the struct for this entry
@@ -104,7 +103,7 @@ int list_empty(const struct list_head *head);
  * @member:	the name of the list_struct within the struct.
  */
 #define list_entry(ptr, type, member) \
-            ((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
+    ((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
 
 /**
  * list_for_each	-	iterate over a list
@@ -112,7 +111,7 @@ int list_empty(const struct list_head *head);
  * @head:	the head for your list.
  */
 #define list_for_each(pos, head) \
-	for (pos = (head)->next; pos != (head); pos = pos->next)
+  for (pos = (head)->next; pos != (head); pos = pos->next)
 
 /**
  * list_for_each_safe   -       iterate over a list safe against removal of list entry
@@ -121,14 +120,14 @@ int list_empty(const struct list_head *head);
  * @head:       the head for your list.
  */
 #define list_for_each_safe(pos, n, head) \
-        for (pos = (head)->next, n = pos->next; pos != (head); \
-                pos = n, n = pos->next)
+  for (pos = (head)->next, n = pos->next; pos != (head); \
+    pos = n, n = pos->next)
 
 /**
  * list_first   -   returns the first list item
  * @head:   the head for your list.
  */
 #define list_first(head)                \
-         (head)->next
+   (head)->next
 
 #endif /* _LINUX_LIST_H */
