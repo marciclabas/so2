@@ -87,10 +87,8 @@ ENTRY(clock_handler)
 
 ENTRY(page_fault_handler2)
   SAVE_ALL
-  EOI
-  // %cr2 contains the address that caused the fault
-  // push it as a param to the page_fault_routine2
-  movl %cr2, %eax
+  // stack: [error, eip, ...]
+  movl 4(%esp), %eax // push eip as arg to page_fault_routine2
   pushl %eax
   call page_fault_routine2;
   addl $4, %esp
