@@ -40,21 +40,21 @@ void init_idle(void);
 
 void init_sched(void);
 
-struct task_struct * current();
+task_struct * current();
 
 void task_switch(union task_union*t);
 
-struct task_struct *list_head_to_task_struct(list_head *l);
+task_struct* list_head_to_task_struct(list_head *l);
 
-int allocate_DIR(struct task_struct *t);
+int allocate_DIR(task_struct *t);
 
-page_table_entry * get_PT (struct task_struct *t) ;
+page_table_entry * get_PT (task_struct *t) ;
 
-page_table_entry * get_DIR (struct task_struct *t) ;
+page_table_entry * get_DIR (task_struct *t) ;
 
 /* Headers for the scheduling policy */
 void sched_next_rr();
-void update_process_state_rr(struct task_struct *t, list_head *dest);
+void update_process_state_rr(task_struct *t, list_head *dest);
 int needs_sched_rr();
 void update_sched_data_rr();
 

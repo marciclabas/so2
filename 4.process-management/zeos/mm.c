@@ -75,7 +75,7 @@ for (j=0; j< NR_TASKS; j++) {
 
 
 /* Initialize pages for initial process (user pages) */
-void set_user_pages( struct task_struct *task )
+void set_user_pages(task_struct *task)
 {
  int pag; 
  int new_ph_pag;
@@ -223,7 +223,7 @@ int alloc_frame( void )
     return -1;
 }
 
-void free_user_pages( struct task_struct *task )
+void free_user_pages(task_struct *task)
 {
  int pag;
  page_table_entry * process_PT =  get_PT(task);
