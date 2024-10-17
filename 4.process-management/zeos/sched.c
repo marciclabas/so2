@@ -73,8 +73,16 @@ void init_idle() {
 	idle_task = &task->task;
 }
 
-void init_task1(void)
-{
+void init_task1() {
+	struct list_head * head = list_first(&freequeue);
+	list_del(head);
+	union task_union * task = list_head_to_task_struct(head);
+	
+	task->task.PID = 1;
+	allocate_DIR(&task->task);
+	set_user_pages(&task->task);
+	tss.esp0 = &task->stack[KERNEL_STACK_SIZE];
+	set_cr3(task->task.dir_pages_baseAddr);
 }
 
 

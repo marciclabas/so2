@@ -25,3 +25,17 @@ In `sched.c:init_idle`:
 - Assign `pid = 0` and `allocate_DIR`
 - Setup the stack and `task_struct.kernel_esp` for context switching
 - Initialize `struct task_struct * idle_task` (declared as global in `sched.c`)
+
+
+#### 4.4.2. Init process
+
+In `sched.c:init_task1`:
+- Init with `pid = 1`
+- Init page entries `set_user_pages`
+- Set `tss.esp0` to the top of the kernel stack (aka the end, since it's empty)
+- Set `cr3` to its page directory address
+
+NOT DONE: something about MSR[0x175] ??
+
+### 4.4.3. ZeOS shenanigans
+- Delete `system.c:monoprocess_init_addr_space`
