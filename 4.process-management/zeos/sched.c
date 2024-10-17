@@ -12,6 +12,8 @@ union task_union task[NR_TASKS]
 struct list_head freequeue;
 struct list_head readyqueue;
 
+struct task_struct * idle_task;
+
 struct task_struct *list_head_to_task_struct(struct list_head *l) {
   return list_entry( l, struct task_struct, list);
 }
@@ -53,9 +55,22 @@ void cpu_idle(void)
 	}
 }
 
-void init_idle (void)
-{
+void init_idle() {
+	struct list_head * head = list_first(&freequeue);
+	list_del(head);
+	union task_union * task = list_head_to_task_struct(head);
+	
+	task->task.PID = 0;
+	allocate_DIR(&task->task);
 
+	// prepare for context switch:
+	// - stack: [@ret, ebp] (ebp can be whatever since `cpu_idle` doesn't use the stack nor will ever return)
+	// - task.kernel_esp <- stack at ebp
+	task->stack[KERNEL_STACK_SIZE-1] = &cpu_idle;
+	task->stack[KERNEL_STACK_SIZE-2] = 0;
+	task->task.kernel_esp = &task->stack[KERNEL_STACK_SIZE-2];
+
+	idle_task = &task->task;
 }
 
 void init_task1(void)

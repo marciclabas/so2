@@ -13,3 +13,15 @@
 **Ready queue**
 - Added `struct list_head readyqueue;` to `sched.c`
 - Initialized as empty in `sched.c:init_sched`
+
+### 4.4. Process initialization
+
+- Added field `unsigned int kernel_esp` to `task_struct` in `include/sched.h`
+
+#### 4.4.1. Idle process
+
+In `sched.c:init_idle`:
+- Pop a task from `freequeue`
+- Assign `pid = 0` and `allocate_DIR`
+- Setup the stack and `task_struct.kernel_esp` for context switching
+- Initialize `struct task_struct * idle_task` (declared as global in `sched.c`)
