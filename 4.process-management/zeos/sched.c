@@ -5,6 +5,7 @@
 #include <sched.h>
 #include <mm.h>
 #include <io.h>
+#include <system.h>
 
 union task_union task[NR_TASKS]
   __attribute__((__section__(".data.task")));
@@ -94,6 +95,14 @@ void init_sched() {
 
 	// readyqueue <- empty
 	INIT_LIST_HEAD(&readyqueue);
+}
+
+void inner_task_switch(union task_union * new) {
+	unsigned int new_esp = new->task.kernel_esp;
+	tss.esp0 = new_esp;
+	write_msr(0x175, new_esp);
+
+	set_cr3(new->task.dir_pages_baseAddr);
 }
 
 struct task_struct* current()

@@ -24,6 +24,7 @@ LDFLAGS = -g -melf_i386
 
 SYSOBJ = \
 	interrupt.o \
+	msr.o \
 	entry.o \
 	sys_call_table.o \
 	io.o \
@@ -63,6 +64,12 @@ bootsect.s: bootsect.S
 	$(CPP) $(ASMFLAGS) -traditional $< -o $@
 
 entry.s: entry.S $(INCLUDEDIR)/asm.h
+	$(CPP) $(ASMFLAGS) -o $@ $<
+
+msr.s: msr.S $(INCLUDEDIR)/asm.h
+	$(CPP) $(ASMFLAGS) -o $@ $<
+
+switch.s: switch.S $(INCLUDEDIR)/asm.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
 
 wrappers.s: wrappers.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h

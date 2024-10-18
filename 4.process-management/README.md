@@ -39,3 +39,10 @@ NOT DONE: something about MSR[0x175] ??
 
 ### 4.4.3. ZeOS shenanigans
 - Delete `system.c:monoprocess_init_addr_space`
+
+
+## 4.5. Process switch
+
+- Added `switch.S:task_switch`, wrapping `inner_task_switch` (plus Makefile rules)
+- Added `sched.c:inner_task_switch`:
+  - 
