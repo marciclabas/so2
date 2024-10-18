@@ -48,6 +48,7 @@ int allocate_DIR(struct task_struct *t)
 
 void cpu_idle(void)
 {
+	printk("Hello idle");
 	__asm__ __volatile__("sti": : :"memory");
 
 	while(1)
@@ -82,7 +83,9 @@ void init_task1() {
 	task->task.PID = 1;
 	allocate_DIR(&task->task);
 	set_user_pages(&task->task);
-	tss.esp0 = &task->stack[KERNEL_STACK_SIZE];
+	unsigned int kernel_esp = &task->stack[KERNEL_STACK_SIZE];
+	write_msr(0x175, kernel_esp);
+	tss.esp0 = kernel_esp;
 	set_cr3(task->task.dir_pages_baseAddr);
 }
 
@@ -98,11 +101,18 @@ void init_sched() {
 }
 
 void inner_task_switch(union task_union * new) {
-	unsigned int new_esp = new->task.kernel_esp;
+	struct task_struct * curr = current();
+	
+	unsigned int new_esp = &new->task.kernel_esp;
+	set_cr3(new->task.dir_pages_baseAddr);
 	tss.esp0 = new_esp;
 	write_msr(0x175, new_esp);
+	
+	unsigned int kernel_esp;
+	asm volatile("movl %%ebp, %0" : "=g" (kernel_esp));
+	curr->kernel_esp = kernel_esp;
 
-	set_cr3(new->task.dir_pages_baseAddr);
+	asm volatile("movl %0, %%esp" : "=r" (new_esp));
 }
 
 struct task_struct* current()

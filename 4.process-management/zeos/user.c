@@ -22,7 +22,7 @@ int __attribute__ ((__section__(".text.main")))
 
   while(1) {
     int time = gettime();
-    if (time > last_time + 1000) {
+    if (time > last_time + 100) {
       last_time = time;
       print_time(last_time);
     }

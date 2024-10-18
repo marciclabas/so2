@@ -80,13 +80,18 @@ void keyboard_routine() {
   unsigned char inp = inb(0x60);
 
   int keyup = inp & 0x80;
+  char c = char_map[inp & 0x7F];
+  
   if (!keyup) {
-    char c = char_map[inp];
     if (c != '\0')
       printc(c);
   }
-  else
+  else {
     printk("Key up");
+    if (c == 'a') {
+      task_switch(idle_task);
+    }
+  }
   printk(")\n");
 }
 
