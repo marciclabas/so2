@@ -3,3 +3,10 @@ docker
 *.o
 *.out
 *.exe
+*.objdump
+**/bootsect
+**/build
+**/system
+**/user
+*.bin
+bochsout.txt
