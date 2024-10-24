@@ -10,3 +10,4 @@ docker
 **/user
 *.bin
 bochsout.txt
+*.s
