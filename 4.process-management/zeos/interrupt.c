@@ -100,10 +100,13 @@ void clock_routine() {
   zeos_show_clock();
 }
 
-void page_fault_routine2(int addr) {
+void page_fault_routine2(int access_addr, int instr_addr) {
   char str_addr[8];
-  print_hex(addr, str_addr, 8);
+  print_hex(instr_addr, str_addr, 8);
   printk("Page fault at address: 0x");
+  printk(str_addr);
+  printk(", accessing 0x");
+  print_hex(access_addr, str_addr, 8);
   printk(str_addr);
   printk("\n");
   while (1);

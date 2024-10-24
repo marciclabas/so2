@@ -90,8 +90,10 @@ ENTRY(page_fault_handler2)
   // stack: [error, eip, ...]
   movl 4(%esp), %eax // push eip as arg to page_fault_routine2
   pushl %eax
-  call page_fault_routine2;
-  addl $4, %esp
+  movl %cr2, %eax // push cr2 as arg to page_fault_routine2
+  pushl %eax
+  call page_fault_routine2; // page_fault_routine2(cr2, eip)
+  addl $8, %esp
   RESTORE_ALL
   iret;
 
