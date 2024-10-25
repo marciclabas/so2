@@ -91,9 +91,6 @@ void keyboard_routine() {
     if (c == 'a') {
       task_switch(idle_task);
     }
-    else if (c == 'b') {
-      task_switch(init_task);
-    }
   }
   printk(")\n");
 }

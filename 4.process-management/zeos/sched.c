@@ -14,7 +14,6 @@ struct list_head freequeue;
 struct list_head readyqueue;
 
 struct task_struct * idle_task;
-struct task_struct * init_task;
 
 struct task_struct *list_head_to_task_struct(struct list_head *l) {
   return list_entry( l, struct task_struct, list);
@@ -49,7 +48,7 @@ int allocate_DIR(struct task_struct *t)
 
 void cpu_idle(void)
 {
-	printk("Hello idle");
+	printk("Hello idle\n");
 	__asm__ __volatile__("sti": : :"memory");
 
 	while(1)
@@ -88,8 +87,6 @@ void init_task1() {
 	write_msr(0x175, kernel_esp);
 	tss.esp0 = kernel_esp;
 	set_cr3(task->task.dir_pages_baseAddr);
-
-	init_task = &task->task;
 }
 
 

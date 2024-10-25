@@ -44,5 +44,7 @@ NOT DONE: something about MSR[0x175] ??
 ## 4.5. Process switch
 
 - Added `switch.S:task_switch`, wrapping `inner_task_switch` (plus Makefile rules)
-- Added `sched.c:inner_task_switch`:
-  - 
+- Added `sched.c:inner_task_switch`
+- Added `switch.S:ret_task_switch`
+
+## 4.6 Process creation and ID
