@@ -100,10 +100,10 @@ void init_sched() {
 	INIT_LIST_HEAD(&readyqueue);
 }
 
-void inner_task_switch(union task_union * new) {
+void __attribute__((noreturn)) inner_task_switch(union task_union * new) {
 	struct task_struct * curr = current();
 	
-	unsigned int new_esp = &new->task.kernel_esp;
+	unsigned int new_esp = new->task.kernel_esp;
 	set_cr3(new->task.dir_pages_baseAddr);
 	tss.esp0 = new_esp;
 	write_msr(0x175, new_esp);
@@ -112,7 +112,14 @@ void inner_task_switch(union task_union * new) {
 	asm volatile("movl %%ebp, %0" : "=g" (kernel_esp));
 	curr->kernel_esp = kernel_esp;
 
-	asm volatile("movl %0, %%esp" : "=r" (new_esp));
+	asm volatile(
+		"movl %0, %%esp;"
+		"popl %%ebp;"
+		"ret;"
+		: : "r" (new_esp)
+	);
+
+	__builtin_unreachable();
 }
 
 struct task_struct* current()
