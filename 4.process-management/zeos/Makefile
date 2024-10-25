@@ -45,7 +45,7 @@ USROBJ = \
 	wrappers.o \
 	# libjp.a \
 
-all:zeos.bin
+all:zeos.bin dump
 
 zeos.bin: bootsect system build user
 	$(OBJCOPY) system system.out

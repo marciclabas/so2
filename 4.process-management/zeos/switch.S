@@ -14,3 +14,9 @@ ENTRY(task_switch)
   popl %esi
   popl %edi
   ret
+
+ENTRY(ret_task_switch)
+  movl 4(%esp), %eax
+  movl %eax, %esp
+  popl %ebp
+  ret

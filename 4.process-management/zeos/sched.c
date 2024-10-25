@@ -14,6 +14,7 @@ struct list_head freequeue;
 struct list_head readyqueue;
 
 struct task_struct * idle_task;
+struct task_struct * init_task;
 
 struct task_struct *list_head_to_task_struct(struct list_head *l) {
   return list_entry( l, struct task_struct, list);
@@ -87,6 +88,8 @@ void init_task1() {
 	write_msr(0x175, kernel_esp);
 	tss.esp0 = kernel_esp;
 	set_cr3(task->task.dir_pages_baseAddr);
+
+	init_task = &task->task;
 }
 
 
@@ -100,26 +103,13 @@ void init_sched() {
 	INIT_LIST_HEAD(&readyqueue);
 }
 
-void __attribute__((noreturn)) inner_task_switch(union task_union * new) {
-	struct task_struct * curr = current();
+void inner_task_switch(union task_union * new) {
+	asm volatile("movl %%ebp, %0" : "=g" (current()->kernel_esp));
 	
-	unsigned int new_esp = new->task.kernel_esp;
 	set_cr3(new->task.dir_pages_baseAddr);
-	tss.esp0 = new_esp;
-	write_msr(0x175, new_esp);
-	
-	unsigned int kernel_esp;
-	asm volatile("movl %%ebp, %0" : "=g" (kernel_esp));
-	curr->kernel_esp = kernel_esp;
-
-	asm volatile(
-		"movl %0, %%esp;"
-		"popl %%ebp;"
-		"ret;"
-		: : "r" (new_esp)
-	);
-
-	__builtin_unreachable();
+	tss.esp0 = new->task.kernel_esp;
+	write_msr(0x175, new->task.kernel_esp);
+	ret_task_switch(new->task.kernel_esp);
 }
 
 struct task_struct* current()

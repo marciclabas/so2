@@ -21,10 +21,10 @@ int __attribute__ ((__section__(".text.main")))
   print_time(last_time);
 
   while(1) {
-    // int time = gettime();
-    // if (time > last_time + 100) {
-    //   last_time = time;
-    //   print_time(last_time);
-    // }
+    int time = gettime();
+    if (time > last_time + 100) {
+      last_time = time;
+      print_time(last_time);
+    }
   }
 }
