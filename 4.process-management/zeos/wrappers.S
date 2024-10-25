@@ -93,3 +93,25 @@ after_getpid:
   call set_errno_eax
 
   ret
+
+
+ENTRY(fork)
+  movl $10, %eax
+
+  pushl %ecx
+  pushl %edx
+
+  pushl $after_fork
+
+  pushl %ebp
+  movl %esp, %ebp
+  sysenter
+
+after_fork:
+  popl %ebp
+  addl $4, %esp // popl $after
+  popl %edx
+  popl %ecx
+  call set_errno_eax
+
+  ret

@@ -31,13 +31,30 @@ int sys_getpid()
 	return current()->PID;
 }
 
-int sys_fork()
-{
-  int PID=-1;
+int sys_fork() {
+  if (list_empty(&freequeue))
+    return -1;
 
-  // creates the child process
+  struct list_head * head = list_first(&freequeue);
+  list_del(head);
+  struct task_struct * child = list_head_to_task_struct(head);
+
+  struct task_struct * parent = current();
+  copy_data(parent, child, KERNEL_STACK_SIZE);
+
+  allocate_DIR(child);
   
-  return PID;
+  for (int i = 0; i < NUM_PAG_DATA; i++) {
+    if (get_PT(parent)[i].bits.present) {
+      unsigned int frame = alloc_frame();
+      if (frame == -1) {
+        free_user_pages(child);
+        return -1;
+      }
+      
+      set_ss_pag(get_PT(child->dir_pages_baseAddr), i, frame);
+    }
+  }
 }
 
 void sys_exit()
