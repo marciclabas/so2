@@ -34,3 +34,8 @@ ENTRY(init_msrs)
   addl $8, %esp
 
   ret
+
+
+ENTRY(read_ebp)
+  movl %ebp, %eax
+  ret

@@ -101,8 +101,7 @@ void init_sched() {
 }
 
 void inner_task_switch(union task_union * new) {
-	asm volatile("movl %%ebp, %0" : "=g" (current()->kernel_esp));
-	
+	current()->kernel_esp = read_ebp();
 	set_cr3(new->task.dir_pages_baseAddr);
 	tss.esp0 = new->task.kernel_esp;
 	write_msr(0x175, new->task.kernel_esp);
