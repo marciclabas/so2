@@ -15,6 +15,11 @@ struct list_head readyqueue;
 
 struct task_struct * idle_task;
 
+int pid_counter = 2;
+int new_pid() {
+	return pid_counter++;
+}
+
 struct task_struct *list_head_to_task_struct(struct list_head *l) {
   return list_entry( l, struct task_struct, list);
 }
@@ -68,8 +73,8 @@ void init_idle() {
 	// prepare for context switch:
 	// - stack: [@ret, ebp] (ebp can be whatever since `cpu_idle` doesn't use the stack nor will ever return)
 	// - task.kernel_esp <- stack at ebp
-	task->stack[KERNEL_STACK_SIZE-1] = &cpu_idle;
 	task->stack[KERNEL_STACK_SIZE-2] = 0;
+	task->stack[KERNEL_STACK_SIZE-1] = &cpu_idle;
 	task->task.kernel_esp = &task->stack[KERNEL_STACK_SIZE-2];
 
 	idle_task = &task->task;

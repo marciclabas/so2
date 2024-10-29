@@ -46,6 +46,8 @@ void init_sched(void);
 
 struct task_struct * current();
 
+int new_pid();
+
 void task_switch(union task_union*t);
 void inner_task_switch(union task_union*t);
 void ret_task_switch(unsigned int new_esp);
