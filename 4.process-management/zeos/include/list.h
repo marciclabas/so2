@@ -84,12 +84,18 @@ void list_add_tail(list_head *new, list_head *head);
 void list_del(list_head *entry);
 
 /**
+ * list_pop - deletes entry from list and returns it.
+ * @head: the head of the list
+ */
+list_head *list_pop(list_head *head);
+
+/**
  * list_is_last - tests whether @list is the last entry in list @head
  * @list: the entry to test
  * @head: the head of the list
  */
 int list_is_last(const list_head *list,
-        const list_head *head);
+    const list_head *head);
 
 /**
  * list_empty - tests whether a list is empty
@@ -104,7 +110,7 @@ int list_empty(const list_head *head);
  * @member:	the name of the list_struct within the struct.
  */
 #define list_entry(ptr, type, member) \
-      ((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
+    ((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
 
 /**
  * list_for_each	-	iterate over a list
@@ -121,14 +127,14 @@ int list_empty(const list_head *head);
  * @head:       the head for your list.
  */
 #define list_for_each_safe(pos, n, head) \
-    for (pos = (head)->next, n = pos->next; pos != (head); \
-        pos = n, n = pos->next)
+  for (pos = (head)->next, n = pos->next; pos != (head); \
+    pos = n, n = pos->next)
 
 /**
  * list_first   -   returns the first list item
  * @head:   the head for your list.
  */
 #define list_first(head)                \
-     (head)->next
+  (head)->next
 
 #endif /* _LINUX_LIST_H */

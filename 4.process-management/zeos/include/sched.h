@@ -14,12 +14,14 @@
 
 typedef enum state_t { ST_RUN, ST_READY, ST_BLOCKED } state_t;
 
-typedef struct {
+typedef struct task_struct {
   int PID;			/* Process ID. This MUST be the first field of the struct. */
   page_table_entry * dir_pages_baseAddr;
+  unsigned int kernel_esp;
+  list_head list;
 } task_struct;
 
-typedef union {
+typedef union task_union {
   task_struct task;
   unsigned long stack[KERNEL_STACK_SIZE];    /* pila de sistema, per procés */
 } task_union;

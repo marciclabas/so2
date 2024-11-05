@@ -36,6 +36,7 @@ SYSOBJ = \
 	hardware.o \
 	list.o \
 	switch.o \
+	asm_utils.o \
 
 LIBZEOS = -L . -l zeos
 

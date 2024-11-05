@@ -78,6 +78,12 @@ void list_del(list_head *entry)
 	entry->prev = (void*) 0;
 }
 
+list_head *list_pop(list_head *head) {
+	list_head *first = head->next;
+	list_del(first);
+	return first;
+}
+
 /**
  * list_is_last - tests whether @list is the last entry in list @head
  * @list: the entry to test

@@ -20,5 +20,6 @@ void keyboard_handler();
 void clock_handler();
 void page_fault_handler2();
 void system_call_handler();
+void syscall_handler_sysenter();
 
 #endif  /* __INTERRUPT_H__ */

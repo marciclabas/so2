@@ -5,19 +5,21 @@
 #include <sched.h>
 #include <mm.h>
 #include <io.h>
+#include <asm_utils.h>
 
 task_union task[NR_TASKS]
   __attribute__((__section__(".data.task")));
 
-#if 0
-task_struct *list_head_to_task_struct(struct list_head *l)
-{
-  return list_entry( l, task_struct, list);
+extern list_head blocked;
+
+list_head freequeue;
+list_head readyqueue;
+
+task_struct* idle_task;
+
+task_struct *list_head_to_task_struct(list_head *l) {
+  return list_entry(l, task_struct, list);
 }
-#endif
-
-extern struct list_head blocked;
-
 
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (task_struct *t) 
@@ -34,38 +36,56 @@ page_table_entry * get_PT (task_struct *t)
 
 int allocate_DIR(task_struct *t) 
 {
-	int pos;
-
-	pos = ((int)t-(int)task)/sizeof(task_union);
-
+	int pos = ((int)t-(int)task)/sizeof(task_union);
 	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos]; 
-
 	return 1;
 }
 
-void cpu_idle(void)
-{
+void cpu_idle(void) {
 	__asm__ __volatile__("sti": : :"memory");
-
-	while(1)
-	{
-	;
-	}
+	while(1);
 }
 
-void init_idle (void)
-{
+void init_idle(void) {
+	list_head * head = list_pop(&freequeue);
+	task_union * task = list_head_to_task_struct(head);
 
+	task->task.PID = 0;
+	allocate_DIR(&task->task);
+
+	// prepare for context switch:
+	// - stack: [@ret, ebp] (ebp can be whatever since `cpu_idle` doesn't use the stack nor will ever return)
+	// - task.kernel_esp <- stack at ebp
+	task->stack[KERNEL_STACK_SIZE-2] = 0;
+	task->stack[KERNEL_STACK_SIZE-1] = &cpu_idle;
+	task->task.kernel_esp = &task->stack[KERNEL_STACK_SIZE-2];
+
+	idle_task = &task->task;
 }
 
-void init_task1(void)
-{
+void init_task1(void) {
+	list_head * head = list_pop(&freequeue);
+	task_union * task = list_head_to_task_struct(head);
+
+	task->task.PID = 1;
+	allocate_DIR(&task->task);
+
+	set_user_pages(&task->task);
+	task->task.kernel_esp = &task->stack[KERNEL_STACK_SIZE];
+	write_msr(0x175, task->task.kernel_esp);
+	tss.esp0 = task->task.kernel_esp;
+	set_cr3(task->task.dir_pages_baseAddr);
 }
 
 
-void init_sched()
-{
+void init_sched() {
+	// freequeue <- all tasks
+	INIT_LIST_HEAD(&freequeue);
+	for (int i = 0; i < NR_TASKS; i++)
+		list_add_tail(&(task[i].task.list), &freequeue);
 
+	// readyqueue <- empty
+	INIT_LIST_HEAD(&readyqueue);
 }
 
 task_struct* current()

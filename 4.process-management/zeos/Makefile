@@ -34,6 +34,7 @@ SYSOBJ = \
 	utils.o \
 	hardware.o \
 	list.o \
+	asm_utils.o \
 
 LIBZEOS = -L . -l zeos
 
@@ -69,6 +70,9 @@ wrappers.s: wrappers.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
 
 sys_call_table.s: sys_call_table.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
+	$(CPP) $(ASMFLAGS) -o $@ $<
+
+asm_utils.s: asm_utils.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
 
 user.o:user.c $(INCLUDEDIR)/libc.h
