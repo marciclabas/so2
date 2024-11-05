@@ -7,6 +7,7 @@
 #include <segment.h>
 #include <hardware.h>
 #include <sched.h>
+#include <libc.h>
 
 Byte phys_mem[TOTAL_PAGES];
 
@@ -75,7 +76,7 @@ for (j=0; j< NR_TASKS; j++) {
 
 
 /* Initialize pages for initial process (user pages) */
-void set_user_pages(task_struct *task)
+void set_user_pages( struct task_struct *task )
 {
  int pag; 
  int new_ph_pag;
@@ -103,7 +104,8 @@ void set_user_pages(task_struct *task)
 }
 
 /* Writes on CR3 register producing a TLB flush */
-void set_cr3(page_table_entry * dir) {
+void set_cr3(page_table_entry * dir)
+{
  	asm volatile("movl %0,%%cr3": :"r" (dir));
 }
 
@@ -261,4 +263,28 @@ void del_ss_pag(page_table_entry *PT, unsigned logical_page)
 /* get_frame - Returns the physical frame associated to page 'logical_page' */
 unsigned int get_frame (page_table_entry *PT, unsigned int logical_page){
      return PT[logical_page].bits.pbase_addr; 
+}
+
+void print_entry(page_table_entry * pt, unsigned int page) {
+  printf("Entry: %x\n", pt[page].entry);
+  printf("Present: %x\n", pt[page].bits.present);
+  printf("RW: %x\n", pt[page].bits.rw);
+  printf("User: %x\n", pt[page].bits.user);
+  printf("Write through: %x\n", pt[page].bits.write_t);
+  printf("Cache disabled: %x\n", pt[page].bits.cache_d);
+  printf("Accessed: %x\n", pt[page].bits.accessed);
+  printf("Dirty: %x\n", pt[page].bits.dirty);
+  printf("Page size: %x\n", pt[page].bits.ps_pat);
+  printf("Global: %x\n", pt[page].bits.global);
+  printf("Available: %x\n", pt[page].bits.avail);
+  printf("Base address: %x\n", pt[page].bits.pbase_addr);
+}
+
+void print_user_pages(struct task_struct * task) {
+  page_table_entry * pt = get_PT(task);
+  for (int i = 0; i < TOTAL_PAGES; i++) {
+    printf("====================================\nPage %x\n", i);
+    print_entry(pt, i);
+    printf("====================================\n");
+  }
 }

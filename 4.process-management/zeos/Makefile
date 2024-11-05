@@ -34,6 +34,7 @@ SYSOBJ = \
 	utils.o \
 	hardware.o \
 	list.o \
+	switch.o \
 	asm_utils.o \
 
 LIBZEOS = -L . -l zeos
@@ -42,9 +43,10 @@ LIBZEOS = -L . -l zeos
 USROBJ = \
 	libc.o \
 	wrappers.o \
+	utils.o \
 	# libjp.a \
 
-all:zeos.bin
+all:zeos.bin dump
 
 zeos.bin: bootsect system build user
 	$(OBJCOPY) system system.out
@@ -66,13 +68,16 @@ bootsect.s: bootsect.S
 entry.s: entry.S $(INCLUDEDIR)/asm.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
 
+asm_utils.s: asm_utils.S $(INCLUDEDIR)/asm.h
+	$(CPP) $(ASMFLAGS) -o $@ $<
+
+switch.s: switch.S $(INCLUDEDIR)/asm.h
+	$(CPP) $(ASMFLAGS) -o $@ $<
+
 wrappers.s: wrappers.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
 
 sys_call_table.s: sys_call_table.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
-	$(CPP) $(ASMFLAGS) -o $@ $<
-
-asm_utils.s: asm_utils.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
 
 user.o:user.c $(INCLUDEDIR)/libc.h

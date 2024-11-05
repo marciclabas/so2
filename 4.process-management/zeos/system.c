@@ -85,6 +85,9 @@ int __attribute__((__section__(".text.main")))
   /* Initialize Memory */
   init_mm();
 
+  /* Initialize an address space to be used for the monoprocess version of ZeOS */
+  // monoprocess_init_addr_space(); /* TO BE DELETED WHEN THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS IS ADDED */
+
   /* Initialize Scheduling */
   init_sched();
 
@@ -100,7 +103,6 @@ int __attribute__((__section__(".text.main")))
   printk("Entering user mode...\n");
 
   enable_int();
-
   write_msr(0x174, __KERNEL_CS);
   write_msr(0x176, syscall_handler_sysenter);
 

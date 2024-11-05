@@ -10,6 +10,7 @@ ENTRY(write_msr)
   wrmsr
   ret
   
+
 ENTRY(read_ebp)
   movl %ebp, %eax
   ret

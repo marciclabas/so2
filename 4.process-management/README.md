@@ -14,7 +14,6 @@
 - Added `struct list_head readyqueue;` to `sched.c`
 - Initialized as empty in `sched.c:init_sched`
 
-
 ### 4.4. Process initialization
 
 - Added field `unsigned int kernel_esp` to `task_struct` in `include/sched.h`
@@ -25,7 +24,7 @@ In `sched.c:init_idle`:
 - Pop a task from `freequeue`
 - Assign `pid = 0` and `allocate_DIR`
 - Setup the stack and `task_struct.kernel_esp` for context switching
-- Initialize `task_struct * idle_task` (declared as global in `sched.c`)
+- Initialize `struct task_struct * idle_task` (declared as global in `sched.c`)
 
 
 #### 4.4.2. Init process
@@ -33,5 +32,27 @@ In `sched.c:init_idle`:
 In `sched.c:init_task1`:
 - Init with `pid = 1`
 - Init page entries `set_user_pages`
-- Set `tss.esp0 = MSR[0x175] = kernel_esp`
+- Set `tss.esp0` to the top of the kernel stack (aka the end, since it's empty)
 - Set `cr3` to its page directory address
+
+NOT DONE: something about MSR[0x175] ??
+
+### 4.4.3. ZeOS shenanigans
+- Delete `system.c:monoprocess_init_addr_space`
+
+
+## 4.5. Process switch
+
+- Added `switch.S:task_switch`, wrapping `inner_task_switch` (plus Makefile rules)
+- Added `sched.c:inner_task_switch`
+- Added `switch.S:ret_task_switch`
+
+## 4.6 Process creation and ID
+
+- Added `sys.C:sys_getpid`, `wrappers.S:getpid`
+- Added `sys.C:sys_fork`, `wrappers.S:fork`
+
+## 4.7. Process scheduling
+
+- Added `int quatum` and `int ticks` to `task_struct` in `include/sched.h`
+- Added `sched.c:get_quantum,set_quantum`

@@ -2,9 +2,10 @@
  * io.c - 
  */
 
+#include <stdarg.h>
 #include <io.h>
-
 #include <types.h>
+#include <utils.h>
 
 /**************/
 /** Screen  ***/
@@ -26,22 +27,22 @@ Byte inb (unsigned short port)
 
 void printc(char c)
 {
-     __asm__ __volatile__ ( "movb %0, %%al; outb $0xe9" ::"a"(c)); /* Magic BOCHS debug: writes 'c' to port 0xe9 */
+   __asm__ __volatile__ ( "movb %0, %%al; outb $0xe9" ::"a"(c)); /* Magic BOCHS debug: writes 'c' to port 0xe9 */
   if (c=='\n')
   {
-    x = 0;
-    y=(y+1)%NUM_ROWS;
+  x = 0;
+  y=(y+1)%NUM_ROWS;
   }
   else
   {
-    Word ch = (Word) (c & 0x00FF) | 0x0200;
-	Word *screen = (Word *)0xb8000;
-	screen[(y * NUM_COLUMNS + x)] = ch;
-    if (++x >= NUM_COLUMNS)
-    {
-      x = 0;
-      y=(y+1)%NUM_ROWS;
-    }
+  Word ch = (Word) (c & 0x00FF) | 0x0200;
+  Word *screen = (Word *)0xb8000;
+  screen[(y * NUM_COLUMNS + x)] = ch;
+  if (++x >= NUM_COLUMNS)
+  {
+  x = 0;
+  y=(y+1)%NUM_ROWS;
+  }
   }
 }
 
@@ -57,26 +58,14 @@ void printc_xy(Byte mx, Byte my, char c)
   y=cy;
 }
 
-void print_bits(int value, char * output, int size) {
-  for (int i = 0; i < size; i++) {
-    output[size-i-1] = (value & 1) + '0';
-    value >>= 1;
-  }
-  output[size] = '\0';
+void printf(const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  inner_printf(printk, format, args);
+  va_end(args);
 }
 
-void print_hex(int value, char * output, int size) {
-  for (int i = 0; i < size; i++) {
-    int digit = value & 0xf;
-    output[size-i-1] = digit < 10 ? digit + '0' : digit - 10 + 'A';
-    value >>= 4;
-  }
-  output[size] = '\0';
-}
-
-void printk(char *string)
-{
-  int i;
-  for (i = 0; string[i]; i++)
+void printk(const char *string) {
+  for (int i = 0; string[i]; i++)
     printc(string[i]);
 }

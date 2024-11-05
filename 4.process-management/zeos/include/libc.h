@@ -11,12 +11,15 @@
 int write(int fd, char *buffer, int size);
 
 void itoa(int a, char *b);
+void int2base(int a, char *b, int base);
 
 int strlen(char *a);
 
 int getpid();
 
 int fork();
+
+void printf(const char *format, ...);
 
 int gettime();
 void perror();

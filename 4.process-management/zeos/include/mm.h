@@ -18,10 +18,11 @@ extern Byte phys_mem[TOTAL_PAGES];
 
 extern page_table_entry dir_pages[NR_TASKS][TOTAL_PAGES];
 
-int init_frames(void);
-int alloc_frame(void);
-void free_frame(unsigned int frame);
-void set_user_pages(task_struct *task);
+int init_frames( void );
+int alloc_frame( void );
+void free_frame( unsigned int frame );
+void set_user_pages( struct task_struct *task );
+void free_user_pages( struct task_struct *task );
 
 
 extern Descriptor  *gdt;
@@ -38,5 +39,8 @@ void setTSS();
 void set_ss_pag(page_table_entry *PT, unsigned page,unsigned frame);
 void del_ss_pag(page_table_entry *PT, unsigned page);
 unsigned int get_frame(page_table_entry *PT, unsigned int page);
+
+void print_entry(page_table_entry * pt, unsigned int page);
+void print_user_pages(struct task_struct * task);
 
 #endif  /* __MM_H__ */
