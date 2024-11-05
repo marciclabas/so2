@@ -32,13 +32,13 @@ int sys_getpid() {
 }
 
 void copy_pt_entry(
-  struct task_struct * from, int idx_from,
-  struct task_struct * to, int idx_to
+  task_struct * from, int idx_from,
+  task_struct * to, int idx_to
 ) {
   set_ss_pag(get_PT(to), idx_to, get_frame(get_PT(from), idx_from));
 }
 
-int allocate_user_data_pages(struct task_struct * task) {
+int allocate_user_data_pages(task_struct * task) {
   for (int i = 0; i < NUM_PAG_DATA; i++) {
     int page = PAG_LOG_INIT_DATA + i;
     unsigned int frame = alloc_frame();
@@ -69,13 +69,12 @@ int sys_fork() {
   if (list_empty(&freequeue))
     return -1;
 
-  struct list_head * head = list_first(&freequeue);
-  list_del(head);
-  struct task_struct * child = list_head_to_task_struct(head);
-  union task_union * child_union = (union task_union *) child;
-  struct task_struct * parent = current();
+  list_head * head = list_pop(&freequeue);
+  task_struct * child = list_head_to_task_struct(head);
+  task_union * child_union = child;
+  task_struct * parent = current();
 
-  copy_data(parent, child, sizeof(union task_union));
+  copy_data(parent, child, sizeof(task_union));
 
   allocate_DIR(child);
   
@@ -98,7 +97,6 @@ int sys_fork() {
       child, PAG_LOG_INIT_DATA + i,
       parent, PAG_LOG_INIT_CODE + NUM_PAG_CODE + i // after user code pages
     );
-
 
   // copy user data pages to temporal entries
   #define TEMPORAL_START ((PAG_LOG_INIT_CODE+NUM_PAG_CODE)*PAGE_SIZE)
