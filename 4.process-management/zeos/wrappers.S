@@ -18,10 +18,26 @@ set_errno_eax:
 end:
   ret
 
+// wrapper withtout parameters
+#define WRAPPER(name, code) \
+  ENTRY(name) \
+    movl $code, %eax; \
+    pushl %ecx; \
+    pushl %edx; \
+    pushl $after_ ## name; \
+    pushl %ebp; \
+    movl %esp, %ebp; \
+    sysenter; \
+  after_ ## name: \
+    popl %ebp; \
+    addl $4, %esp; \
+    popl %edx; \
+    popl %ecx; \
+    call set_errno_eax; \
+    ret;
 
 ENTRY(write)
   pushl %ebx
-  
   // parameters: fd, buffer, size -> %edx, %ecx, %ebx
   // 0(esp) is @ret
   movl 8(%esp), %edx
@@ -50,68 +66,7 @@ after_write:
 
   ret
 
-ENTRY(gettime)
-  movl $10, %eax
-
-  pushl %ecx
-  pushl %edx
-
-  pushl $after_gettime
-
-  pushl %ebp
-  movl %esp, %ebp
-  sysenter
-
-after_gettime:
-  popl %ebp
-  addl $4, %esp // popl $after
-  popl %edx
-  popl %ecx
-  call set_errno_eax
-
-  ret
-
-
-
-ENTRY(getpid)
-  movl $20, %eax
-
-  pushl %ecx
-  pushl %edx
-
-  pushl $after_getpid
-
-  pushl %ebp
-  movl %esp, %ebp
-  sysenter
-
-after_getpid:
-  popl %ebp
-  addl $4, %esp // popl $after
-  popl %edx
-  popl %ecx
-  call set_errno_eax
-
-  ret
-
-
-ENTRY(fork)
-  movl $2, %eax
-
-  pushl %ecx
-  pushl %edx
-
-  pushl $after_fork
-
-  pushl %ebp
-  movl %esp, %ebp
-  sysenter
-
-after_fork:
-  popl %ebp
-  addl $4, %esp // popl $after
-  popl %edx
-  popl %ecx
-  call set_errno_eax
-
-  ret
+WRAPPER(gettime, 10)
+WRAPPER(getpid, 20)
+WRAPPER(fork, 2)
+WRAPPER(exit, 1)

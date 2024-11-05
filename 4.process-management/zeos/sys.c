@@ -122,8 +122,15 @@ int sys_fork() {
   return child->PID;
 }
 
-void sys_exit()
-{  
+void sys_exit() {
+  task_struct * curr = current();
+  free_user_pages(curr);
+  // free PT entries
+  for (int i = 0; i < TOTAL_PAGES; i++)
+    del_ss_pag(get_PT(curr), i);
+  // free task struct
+  list_add_tail(&curr->list, &freequeue);
+  sched_next_rr();
 }
 
 int sys_gettime() {

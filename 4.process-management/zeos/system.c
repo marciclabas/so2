@@ -104,7 +104,7 @@ int __attribute__((__section__(".text.main")))
 
   enable_int();
   write_msr(0x174, __KERNEL_CS);
-  write_msr(0x176, syscall_handler_sysenter);
+  write_msr(0x176, (unsigned int) syscall_handler_sysenter);
 
   /*
    * We return from a 'theorical' call to a 'call gate' to reduce our privileges

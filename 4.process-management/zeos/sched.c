@@ -58,7 +58,7 @@ void cpu_idle(void) {
 
 void init_idle() {
 	list_head * head = list_pop(&freequeue);
-	task_union * task = list_head_to_task_struct(head);
+	task_union * task = (task_union*) list_head_to_task_struct(head);
 	
 	task->task.PID = 0;
 	allocate_DIR(&task->task);
@@ -67,21 +67,21 @@ void init_idle() {
 	// - stack: [@ret, ebp] (ebp can be whatever since `cpu_idle` doesn't use the stack nor will ever return)
 	// - task.kernel_esp <- stack at ebp
 	task->stack[KERNEL_STACK_SIZE-2] = 0;
-	task->stack[KERNEL_STACK_SIZE-1] = &cpu_idle;
-	task->task.kernel_esp = &task->stack[KERNEL_STACK_SIZE-2];
+	task->stack[KERNEL_STACK_SIZE-1] = (unsigned long) &cpu_idle;
+	task->task.kernel_esp = (unsigned int) &task->stack[KERNEL_STACK_SIZE-2];
 
 	idle_task = &task->task;
 }
 
 void init_task1() {
 	list_head * head = list_pop(&freequeue);
-	task_union * task = list_head_to_task_struct(head);
+	task_union * task = (task_union*) list_head_to_task_struct(head);
 	
 	set_quantum(&task->task, 1000);
 	task->task.PID = 1;
 	allocate_DIR(&task->task);
 	set_user_pages(&task->task);
-	task->task.kernel_esp = &task->stack[KERNEL_STACK_SIZE];
+	task->task.kernel_esp = (unsigned int) &task->stack[KERNEL_STACK_SIZE];
 	write_msr(0x175, task->task.kernel_esp);
 	tss.esp0 = task->task.kernel_esp;
 	set_cr3(task->task.dir_pages_baseAddr);
@@ -133,17 +133,12 @@ int needs_sched_rr() {
 }
 
 // void update_process_state_rr(task_struct *t, struct list_head *dst) {
-// 	if (dst == NULL) {
-		
-// 	}
+// 	if (dst != NULL)
+// 		list_add_tail(&t->list, dst);
 // }
 
 void sched_next_rr() {
-	task_struct * curr = current();
-	if (curr != idle_task) {
-		list_add_tail(&curr->list, &readyqueue);
-	}
-	struct list_head * next = list_pop(&readyqueue);
+	list_head * next = list_pop(&readyqueue);
 	task_struct * next_task = list_head_to_task_struct(next);
 	remaining_ticks = get_quantum(next_task);
 	task_switch(next_task);
@@ -151,9 +146,10 @@ void sched_next_rr() {
 
 void schedule() {
 	update_sched_data_rr();
-	int reschedule = needs_sched_rr();
-  if (reschedule)
+  if (needs_sched_rr()) {
+		list_add_tail(&current()->list, &readyqueue);
     sched_next_rr();
+	}
 }
 
 void print_pcb(task_struct *pcb) {

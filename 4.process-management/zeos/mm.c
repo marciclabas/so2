@@ -76,7 +76,7 @@ for (j=0; j< NR_TASKS; j++) {
 
 
 /* Initialize pages for initial process (user pages) */
-void set_user_pages( struct task_struct *task )
+void set_user_pages( task_struct *task )
 {
  int pag; 
  int new_ph_pag;
@@ -224,7 +224,7 @@ int alloc_frame( void )
     return -1;
 }
 
-void free_user_pages( struct task_struct *task )
+void free_user_pages(task_struct *task)
 {
  int pag;
  page_table_entry * process_PT =  get_PT(task);
@@ -280,7 +280,7 @@ void print_entry(page_table_entry * pt, unsigned int page) {
   printf("Base address: %x\n", pt[page].bits.pbase_addr);
 }
 
-void print_user_pages(struct task_struct * task) {
+void print_user_pages(task_struct * task) {
   page_table_entry * pt = get_PT(task);
   for (int i = 0; i < TOTAL_PAGES; i++) {
     printf("====================================\nPage %x\n", i);

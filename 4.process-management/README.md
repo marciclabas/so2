@@ -32,27 +32,25 @@ In `sched.c:init_idle`:
 In `sched.c:init_task1`:
 - Init with `pid = 1`
 - Init page entries `set_user_pages`
-- Set `tss.esp0` to the top of the kernel stack (aka the end, since it's empty)
+- Set `tss.esp0 = MSR[0x175] = kernel_esp`
 - Set `cr3` to its page directory address
-
-NOT DONE: something about MSR[0x175] ??
 
 ### 4.4.3. ZeOS shenanigans
 - Delete `system.c:monoprocess_init_addr_space`
 
 
 ## 4.5. Process switch
-
 - Added `switch.S:task_switch`, wrapping `inner_task_switch` (plus Makefile rules)
 - Added `sched.c:inner_task_switch`
 - Added `switch.S:ret_task_switch`
 
-## 4.6 Process creation and ID
-
+## 4.6, Process creation and ID
 - Added `sys.C:sys_getpid`, `wrappers.S:getpid`
 - Added `sys.C:sys_fork`, `wrappers.S:fork`
+- Added both to `sys_call_table.S`
 
 ## 4.7. Process scheduling
-
 - Added `int quatum` and `int ticks` to `task_struct` in `include/sched.h`
 - Added `sched.c:get_quantum,set_quantum`
+
+## 4.8. Process Destruction
