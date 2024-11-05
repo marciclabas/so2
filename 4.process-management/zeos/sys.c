@@ -124,13 +124,18 @@ int sys_fork() {
 
 void sys_exit() {
   task_struct * curr = current();
-  free_user_pages(curr);
-  // free PT entries
-  for (int i = 0; i < TOTAL_PAGES; i++)
-    del_ss_pag(get_PT(curr), i);
-  // free task struct
   list_add_tail(&curr->list, &freequeue);
   sched_next_rr();
+  
+  page_table_entry * pt = get_PT(curr);
+  for (int i = 0; i < TOTAL_PAGES; i++) {
+    if (pt[i].bits.present) {
+      printf("Freeing frame %d...", get_frame(pt, i));
+      free_frame(get_frame(pt, i));
+      del_ss_pag(pt, i);
+      printf("OK\n");
+    }
+  }
 }
 
 int sys_gettime() {

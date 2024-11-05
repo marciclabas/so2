@@ -25,5 +25,9 @@ int __attribute__ ((__section__(".text.main")))
       last_time = time;
       printf("[pid=%d] Current Time: %d\n", getpid(), time);
     }
+    if (time > 1000 && pid == 0) {
+      printf("Child exiting\n");
+      exit();
+    }
   }
 }
