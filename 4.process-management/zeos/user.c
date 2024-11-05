@@ -3,6 +3,11 @@
 
 int pid;
 
+void sleep(int ticks) {
+  int t0 = gettime();
+  while (gettime() < t0 + ticks);
+}
+
 
 int __attribute__ ((__section__(".text.main")))
   main(void)
@@ -12,22 +17,18 @@ int __attribute__ ((__section__(".text.main")))
 
   int pid = fork();
   if (pid == 0) {
-    printf("Child\n");
+    printf("Blocking child (pid=%d)\n", getpid());
+    block();
+    printf("Unblocked\n");
+    sleep(1000);
+    printf("Exiting child\n");
+    exit();
   } else {
     printf("Parent. Child pid=%d\n", pid);
-  }
-
-  int last_time = gettime();
-
-  while(1) {
-    int time = gettime();
-    if (time > last_time + 100) {
-      last_time = time;
-      printf("[pid=%d] Current Time: %d\n", getpid(), time);
-    }
-    if (time > 1000 && pid == 0) {
-      printf("Child exiting\n");
-      exit();
-    }
+    sleep(100);
+    printf("Unblocking child\n");
+    int ok = unblock(pid);
+    printf("Unblock -> %d\n", ok);
+    while(1);
   }
 }

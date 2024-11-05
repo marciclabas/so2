@@ -99,8 +99,24 @@ int list_is_last(const list_head *list,
  * list_empty - tests whether a list is empty
  * @head: the list to test.
  */
-int list_empty(const list_head *head)
-{
+int list_empty(const list_head *head) {
 	return head->next == head;
 }
 
+int list_len(const list_head *head) {
+	int len = 0;
+	list_head *it = head->next;
+	list_for_each(it, head) {
+		len++;
+	}
+	return len;
+}
+
+list_head* list_find(int (*pred)(list_head*), list_head *head) {
+	list_head *it = head->next;
+	list_for_each(it, head) {
+		if (pred(it))
+			return it;
+	}
+	return 0;
+}

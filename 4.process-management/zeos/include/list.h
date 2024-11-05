@@ -103,6 +103,10 @@ int list_is_last(const list_head *list,
  */
 int list_empty(const list_head *head);
 
+int list_len(const list_head *head);
+
+list_head* list_find(int (*pred)(list_head*), list_head *head);
+
 /**
  * list_entry - get the struct for this entry
  * @ptr:	the &list_head pointer.

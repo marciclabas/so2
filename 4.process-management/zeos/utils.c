@@ -139,15 +139,14 @@ void reverse(char * s, int size) {
   }
 }
 
-void int2base(int a, char *b, int base) {
-  int i = 0;
-
+void uint2base(int a, char *b, int base) {
   if (a == 0) {
     b[0] = '0';
     b[1] = '\0';
     return;
   }
 
+  int i = 0;
   while (a > 0) {
     int remainder = a % base;
     b[i] = (remainder < 10) ? remainder + '0' : remainder - 10 + 'A';
@@ -159,8 +158,17 @@ void int2base(int a, char *b, int base) {
   b[i] = '\0';
 }
 
-void inner_printf(void (*print)(const char*s), char *fmt, va_list args) {
-  char buffer[33];
+void int2base(int a, char *b, int base) {
+  if (a < 0) {
+    b[0] = '-';
+    uint2base(-a, &b[1], base);
+  } else {
+    uint2base(a, b, base);
+  }
+}
+
+void inner_printf(void (*print)(const char*s), const char *fmt, va_list args) {
+  char buffer[34];
   int i = 0;
   
   while (fmt[i] != '\0') {

@@ -17,6 +17,6 @@ unsigned long get_ticks(void);
 
 void reverse(char * s, int size);
 void int2base(int a, char *b, int base);
-void inner_printf(void (*print)(const char*s), char *fmt, va_list args);
+void inner_printf(void (*print)(const char*s), const char *fmt, va_list args);
 
 #endif

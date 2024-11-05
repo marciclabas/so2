@@ -17,10 +17,14 @@ enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 typedef struct task_struct {
   int PID;			/* Process ID. This MUST be the first field of the struct. */
   page_table_entry * dir_pages_baseAddr;
+  list_head list;
   unsigned int kernel_esp;
   int quantum;
   enum state_t state;
-  list_head list;
+  int pending_unblocks;
+  list_head children;
+  list_head child_anchor;
+  struct task_struct *parent;
 } task_struct;
 
 void print_pcb(task_struct *pcb);
@@ -55,6 +59,7 @@ void inner_task_switch(task_union*t);
 void ret_task_switch(unsigned int new_esp);
 
 task_struct *list_head_to_task_struct(list_head *l);
+task_struct *list_head_to_child(list_head *l);
 
 int allocate_DIR(task_struct *t);
 

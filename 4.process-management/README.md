@@ -53,4 +53,19 @@ In `sched.c:init_task1`:
 - Added `int quatum` and `int ticks` to `task_struct` in `include/sched.h`
 - Added `sched.c:get_quantum,set_quantum`
 
-## 4.8. Process Destruction
+## 4.8. Process destruction
+- Added `sys.C:sys_exit`, `wrappers.S:exit`
+- Added to `sys_call_table.S`
+
+## 4.9. Process blocking
+- Added `sys.C:sys_block`, `wrappers.S:block`
+- Added to `sys.C:sys_unblock`, `wrappers.S:unblock`
+- Added both to `sys_call_table.S`: `table[5] = sys_block`, `table[6] = sys_unblock`
+- Added entries to `sched.h:task_struct`:
+  
+  ```C
+  int pending_unblocks;
+  list_head children;
+  list_head child_anchor;
+  task_struct *parent;
+  ```

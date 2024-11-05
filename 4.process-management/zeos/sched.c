@@ -20,11 +20,15 @@ int new_pid() {
 	return pid_counter++;
 }
 
-task_struct *list_head_to_task_struct(struct list_head *l) {
-  return list_entry( l, task_struct, list);
+task_struct *list_head_to_task_struct(list_head *l) {
+  return list_entry(l, task_struct, list);
 }
 
-extern struct list_head blocked;
+task_struct *list_head_to_child(list_head *l) {
+	return list_entry(l, task_struct, child_anchor);
+}
+
+extern list_head blocked;
 
 
 /* get_DIR - Returns the Page Directory address for task 't' */
@@ -70,6 +74,8 @@ void init_idle() {
 	task->stack[KERNEL_STACK_SIZE-1] = (unsigned long) &cpu_idle;
 	task->task.kernel_esp = (unsigned int) &task->stack[KERNEL_STACK_SIZE-2];
 
+	INIT_LIST_HEAD(&task->task.children);
+
 	idle_task = &task->task;
 }
 
@@ -77,7 +83,7 @@ void init_task1() {
 	list_head * head = list_pop(&freequeue);
 	task_union * task = (task_union*) list_head_to_task_struct(head);
 	
-	set_quantum(&task->task, 1000);
+	set_quantum(&task->task, 100);
 	task->task.PID = 1;
 	allocate_DIR(&task->task);
 	set_user_pages(&task->task);
@@ -85,6 +91,8 @@ void init_task1() {
 	write_msr(0x175, task->task.kernel_esp);
 	tss.esp0 = task->task.kernel_esp;
 	set_cr3(task->task.dir_pages_baseAddr);
+
+	INIT_LIST_HEAD(&task->task.children);
 }
 
 
@@ -141,7 +149,7 @@ void sched_next_rr() {
 	list_head * next = list_pop(&readyqueue);
 	task_struct * next_task = list_head_to_task_struct(next);
 	remaining_ticks = get_quantum(next_task);
-	task_switch(next_task);
+	task_switch((task_union*) next_task);
 }
 
 void schedule() {

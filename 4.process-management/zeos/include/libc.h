@@ -8,12 +8,12 @@
 
 #include <stats.h>
 
-int write(int fd, char *buffer, int size);
+int write(int fd, const char *buffer, int size);
 
 void itoa(int a, char *b);
 void int2base(int a, char *b, int base);
 
-int strlen(char *a);
+int strlen(const char *a);
 
 int getpid();
 
@@ -24,5 +24,8 @@ void printf(const char *format, ...);
 int gettime();
 void perror();
 void exit();
+
+void block();
+int unblock(int pid);
 
 #endif  /* __LIBC_H__ */

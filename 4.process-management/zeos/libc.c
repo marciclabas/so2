@@ -29,13 +29,13 @@ void perror() {
   }
 }
 
-int strlen(char *a) {
+int strlen(const char *a) {
   int i = 0;
   while (a[i]!=0) i++;
   return i;
 }
 
-void print(char *a) {
+void print(const char *a) {
   write(1, a, strlen(a));
 }
 

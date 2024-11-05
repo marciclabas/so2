@@ -27,7 +27,6 @@ int sys_ni_syscall()
 }
 
 int sys_getpid() {
-  printf("Current task: %x\n", current());
 	return current()->PID;
 }
 
@@ -56,23 +55,14 @@ int ret_from_fork() {
   return 0;
 }
 
-void test_access(unsigned int addr) {
-  printf("Testing %x\n", addr);
-  int x = *(int *) addr;
-  printf("Read OK\n");
-  *(int *) addr = x;
-  printf("Write OK\n");
-}
-
 int sys_fork() {
 
   if (list_empty(&freequeue))
     return -1;
 
-  list_head * head = list_pop(&freequeue);
-  task_struct * child = list_head_to_task_struct(head);
-  task_union * child_union = child;
-  task_struct * parent = current();
+  list_head* head = list_pop(&freequeue);
+  task_struct* child = list_head_to_task_struct(head);
+  task_struct* parent = current();
 
   copy_data(parent, child, sizeof(task_union));
 
@@ -114,9 +104,13 @@ int sys_fork() {
   child->kernel_esp += (DWord) child - (DWord) parent; // offset from the base is the same
   // kernel_esp didn't account for the new context, so we need to add it
   child->kernel_esp -= 19 * sizeof(DWord); // 17 context + 1 ebp + 1 ret_from_fork
-  DWord * esp = (unsigned int *) child->kernel_esp;
+  DWord * esp = (DWord*) child->kernel_esp;
   esp[0] = 0; // fake ebp
-  esp[1] = &ret_from_fork;
+  esp[1] = (DWord) &ret_from_fork;
+
+  INIT_LIST_HEAD(&child->children);
+  child->parent = parent;
+  list_add_tail(&child->child_anchor, &parent->children);
 
   list_add_tail(&child->list, &readyqueue);
   return child->PID;
@@ -126,14 +120,19 @@ void sys_exit() {
   task_struct * curr = current();
   list_add_tail(&curr->list, &freequeue);
   sched_next_rr();
+  list_del(&curr->child_anchor);
+
+  list_head* it;
+  list_for_each(it, &curr->children) {
+    task_struct * child = list_head_to_child(it);
+    list_add_tail(&idle_task->children, &child->child_anchor);
+  }
   
   page_table_entry * pt = get_PT(curr);
   for (int i = 0; i < TOTAL_PAGES; i++) {
     if (pt[i].bits.present) {
-      printf("Freeing frame %d...", get_frame(pt, i));
       free_frame(get_frame(pt, i));
       del_ss_pag(pt, i);
-      printf("OK\n");
     }
   }
 }
@@ -158,4 +157,45 @@ int sys_write(int fd, char * buffer, int size) {
   if (copy_status < 0) return copy_status;
 
   return sys_write_console(sys_buffer, size);
+}
+
+extern list_head blocked;
+
+void sys_block() {
+  task_struct * curr = current();
+  if (curr->pending_unblocks > 0)
+    curr->pending_unblocks--;
+  else {
+    curr->state = ST_BLOCKED;
+    list_add_tail(&curr->list, &blocked);
+    sched_next_rr();
+  }
+}
+
+task_struct* find_child(list_head* children, int pid) {
+  list_head * it;
+  list_for_each(it, children) {
+    task_struct * child = list_head_to_child(it);
+    if (child->PID == pid)
+      return child;
+  }
+  return NULL;
+}
+
+int sys_unblock(int pid) {
+  task_struct * curr = current();
+
+  task_struct* child = find_child(&curr->children, pid);
+  if (child == NULL)
+    return -1;
+
+  if (child->state == ST_BLOCKED) {
+    list_add_tail(&child->list, &readyqueue);
+    child->state = ST_READY;
+  }
+  else {
+    child->pending_unblocks++;
+  }
+
+  return 0;
 }
