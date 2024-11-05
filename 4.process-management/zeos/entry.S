@@ -86,9 +86,9 @@ ENTRY(clock_handler)
   iret;
 
 ENTRY(page_fault_handler2)
-  SAVE_ALL
   // stack: [error, eip, ...]
   movl 4(%esp), %eax // push eip as arg to page_fault_routine2
+  SAVE_ALL
   pushl %eax
   movl %cr2, %eax // push cr2 as arg to page_fault_routine2
   pushl %eax
