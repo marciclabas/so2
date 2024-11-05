@@ -75,7 +75,7 @@ for (j=0; j< NR_TASKS; j++) {
 
 
 /* Initialize pages for initial process (user pages) */
-void set_user_pages( struct task_struct *task )
+void set_user_pages(task_struct *task)
 {
  int pag; 
  int new_ph_pag;
@@ -103,8 +103,7 @@ void set_user_pages( struct task_struct *task )
 }
 
 /* Writes on CR3 register producing a TLB flush */
-void set_cr3(page_table_entry * dir)
-{
+void set_cr3(page_table_entry * dir) {
  	asm volatile("movl %0,%%cr3": :"r" (dir));
 }
 

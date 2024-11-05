@@ -1,0 +1,15 @@
+gcc -m32 -O2  -g -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude -fno-PIC   -c -o sys.o sys.c
+gcc -m32 -O2  -g -fno-omit-frame-pointer -ffreestanding -Wall -Iinclude -fno-PIC   -c -o system.o system.c
+ld -g -melf_i386 -T system.lds -o system system.o interrupt.o util.o entry.o sys_call_table.o io.o sched.o sys.o mm.o devices.o utils.o hardware.o list.o switch.o  -L . -l zeos
+objcopy -O binary -R .note -R .comment -S system system.out
+objcopy -O binary -R .note -R .comment -S user user.out
+./build bootsect system.out user.out > zeos.bin
+bochs -q -f .bochsrc
+========================================================================
+                       Bochs x86 Emulator 2.6.7
+              Built from SVN snapshot on November 2, 2014
+                  Compiled on Sep 19 2024 at 23:57:20
+========================================================================
+Kernel Loaded!    Entering user mode...
+Returning PID 0
+pPage fault at address: 0x00000000, accessing 0x000B8BE0

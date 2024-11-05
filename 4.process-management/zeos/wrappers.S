@@ -18,6 +18,26 @@ set_errno_eax:
 end:
   ret
 
+/** Interrupt-based write
+ENTRY(write)
+  pushl %ebx
+  // parameters: fd, buffer, size -> %edx, %ecx, %ebx
+  // 0(esp) is @ret
+  movl 8(%esp), %edx
+  movl 12(%esp), %ecx
+  movl 16(%esp), %ebx
+
+
+  movl $4, %eax
+  int $0x80
+  
+  popl %ebx
+
+  call set_errno_eax
+
+  ret
+*/
+
 
 ENTRY(write)
   pushl %ebx
@@ -63,51 +83,6 @@ ENTRY(gettime)
   sysenter
 
 after_gettime:
-  popl %ebp
-  addl $4, %esp // popl $after
-  popl %edx
-  popl %ecx
-  call set_errno_eax
-
-  ret
-
-
-
-ENTRY(getpid)
-  movl $10, %eax
-
-  pushl %ecx
-  pushl %edx
-
-  pushl $after_getpid
-
-  pushl %ebp
-  movl %esp, %ebp
-  sysenter
-
-after_getpid:
-  popl %ebp
-  addl $4, %esp // popl $after
-  popl %edx
-  popl %ecx
-  call set_errno_eax
-
-  ret
-
-
-ENTRY(fork)
-  movl $10, %eax
-
-  pushl %ecx
-  pushl %edx
-
-  pushl $after_fork
-
-  pushl %ebp
-  movl %esp, %ebp
-  sysenter
-
-after_fork:
   popl %ebp
   addl $4, %esp // popl $after
   popl %edx

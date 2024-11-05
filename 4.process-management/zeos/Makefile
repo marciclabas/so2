@@ -24,7 +24,6 @@ LDFLAGS = -g -melf_i386
 
 SYSOBJ = \
 	interrupt.o \
-	util.o \
 	entry.o \
 	sys_call_table.o \
 	io.o \
@@ -35,7 +34,6 @@ SYSOBJ = \
 	utils.o \
 	hardware.o \
 	list.o \
-	switch.o \
 
 LIBZEOS = -L . -l zeos
 
@@ -45,7 +43,7 @@ USROBJ = \
 	wrappers.o \
 	# libjp.a \
 
-all:zeos.bin dump
+all:zeos.bin
 
 zeos.bin: bootsect system build user
 	$(OBJCOPY) system system.out
@@ -65,12 +63,6 @@ bootsect.s: bootsect.S
 	$(CPP) $(ASMFLAGS) -traditional $< -o $@
 
 entry.s: entry.S $(INCLUDEDIR)/asm.h
-	$(CPP) $(ASMFLAGS) -o $@ $<
-
-util.s: util.S $(INCLUDEDIR)/asm.h
-	$(CPP) $(ASMFLAGS) -o $@ $<
-
-switch.s: switch.S $(INCLUDEDIR)/asm.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
 
 wrappers.s: wrappers.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h

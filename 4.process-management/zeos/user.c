@@ -19,16 +19,12 @@ int __attribute__ ((__section__(".text.main")))
 
   int last_time = gettime();
   print_time(last_time);
-  write(1, "PID: ", 5);
-  char buffer[10];
-  itoa(getpid(), buffer);
-  write(1, buffer, strlen(buffer));
 
   while(1) {
-    // int time = gettime();
-    // if (time > last_time + 100) {
-    //   last_time = time;
-    //   print_time(last_time);
-    // }
+    int time = gettime();
+    if (time > last_time + 1000) {
+      last_time = time;
+      print_time(last_time);
+    }
   }
 }

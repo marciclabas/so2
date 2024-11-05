@@ -11,3 +11,4 @@ docker
 *.bin
 bochsout.txt
 *.s
+dev.c

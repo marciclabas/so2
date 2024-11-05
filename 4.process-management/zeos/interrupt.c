@@ -80,18 +80,13 @@ void keyboard_routine() {
   unsigned char inp = inb(0x60);
 
   int keyup = inp & 0x80;
-  char c = char_map[inp & 0x7F];
-  
   if (!keyup) {
+    char c = char_map[inp];
     if (c != '\0')
       printc(c);
   }
-  else {
+  else
     printk("Key up");
-    if (c == 'a') {
-      task_switch(idle_task);
-    }
-  }
   printk(")\n");
 }
 
@@ -100,13 +95,10 @@ void clock_routine() {
   zeos_show_clock();
 }
 
-void page_fault_routine2(int access_addr, int instr_addr) {
+void page_fault_routine2(int addr) {
   char str_addr[8];
-  print_hex(instr_addr, str_addr, 8);
+  print_hex(addr, str_addr, 8);
   printk("Page fault at address: 0x");
-  printk(str_addr);
-  printk(", accessing 0x");
-  print_hex(access_addr, str_addr, 8);
   printk(str_addr);
   printk("\n");
   while (1);
