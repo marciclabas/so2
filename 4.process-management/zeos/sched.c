@@ -56,8 +56,17 @@ int allocate_DIR(task_struct *t)
 }
 
 void cpu_idle(void) {
+	printf("cpu_idle\n");
 	__asm__ __volatile__("sti": : :"memory");
 	while(1);
+}
+
+void init_pcb(task_struct * t) {
+	t->PID = -1;
+	t->quantum = 0;
+	t->state = ST_RUN;
+	t->pending_unblocks = 0;
+	INIT_LIST_HEAD(&t->children);
 }
 
 void init_idle() {
@@ -74,14 +83,15 @@ void init_idle() {
 	task->stack[KERNEL_STACK_SIZE-1] = (unsigned long) &cpu_idle;
 	task->task.kernel_esp = (unsigned int) &task->stack[KERNEL_STACK_SIZE-2];
 
-	INIT_LIST_HEAD(&task->task.children);
-
 	idle_task = &task->task;
+	init_pcb(idle_task);
 }
 
 void init_task1() {
 	list_head * head = list_pop(&freequeue);
 	task_union * task = (task_union*) list_head_to_task_struct(head);
+
+	init_pcb(&task->task);
 	
 	set_quantum(&task->task, 100);
 	task->task.PID = 1;
@@ -91,8 +101,6 @@ void init_task1() {
 	write_msr(0x175, task->task.kernel_esp);
 	tss.esp0 = task->task.kernel_esp;
 	set_cr3(task->task.dir_pages_baseAddr);
-
-	INIT_LIST_HEAD(&task->task.children);
 }
 
 
@@ -104,6 +112,7 @@ void init_sched() {
 
 	// readyqueue <- empty
 	INIT_LIST_HEAD(&readyqueue);
+	INIT_LIST_HEAD(&blocked);
 }
 
 void inner_task_switch(task_union * new) {
@@ -140,22 +149,27 @@ int needs_sched_rr() {
 	return remaining_ticks < 0 && !list_empty(&readyqueue);
 }
 
-// void update_process_state_rr(task_struct *t, struct list_head *dst) {
-// 	if (dst != NULL)
-// 		list_add_tail(&t->list, dst);
-// }
+void update_process_state_rr(task_struct *t, struct list_head *dst) {
+	if (t != idle_task)
+		list_add_tail(&t->list, dst);
+}
 
 void sched_next_rr() {
-	list_head * next = list_pop(&readyqueue);
-	task_struct * next_task = list_head_to_task_struct(next);
-	remaining_ticks = get_quantum(next_task);
-	task_switch((task_union*) next_task);
+	if (list_empty(&readyqueue)) {
+		task_switch((task_union*) idle_task);
+	}
+	else {
+		list_head * next = list_pop(&readyqueue);
+		task_struct * next_task = list_head_to_task_struct(next);
+		remaining_ticks = get_quantum(next_task);
+		task_switch((task_union*) next_task);
+	}
 }
 
 void schedule() {
 	update_sched_data_rr();
   if (needs_sched_rr()) {
-		list_add_tail(&current()->list, &readyqueue);
+		update_process_state_rr(current(), &readyqueue);
     sched_next_rr();
 	}
 }
