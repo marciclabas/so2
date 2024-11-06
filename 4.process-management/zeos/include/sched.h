@@ -28,6 +28,7 @@ typedef struct task_struct {
 } task_struct;
 
 void print_pcb(task_struct *pcb);
+void init_pcb(task_struct *pcb);
 
 typedef union task_union {
   task_struct task;
