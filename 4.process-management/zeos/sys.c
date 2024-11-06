@@ -42,7 +42,6 @@ int allocate_user_data_pages(task_struct * task) {
     int page = PAG_LOG_INIT_DATA + i;
     unsigned int frame = alloc_frame();
     if (frame == -1) {
-      printf("Freeing user pages\n");
       free_user_pages(task);
       return -1;
     }
@@ -118,7 +117,7 @@ int sys_fork() {
 
 void sys_exit() {
   task_struct * curr = current();
-  list_add_tail(&curr->list, &freequeue);
+  update_process_state_rr(curr, &freequeue);
   sched_next_rr();
   list_del(&curr->child_anchor);
 
@@ -190,6 +189,7 @@ int sys_unblock(int pid) {
     return -1;
 
   if (child->state == ST_BLOCKED) {
+    list_del(&child->list);
     list_add_tail(&child->list, &readyqueue);
     child->state = ST_READY;
   }
