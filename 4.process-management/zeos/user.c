@@ -1,8 +1,6 @@
 #include <libc.h>
 #include <io.h>
 
-int pid;
-
 void sleep(int ticks) {
   int t0 = gettime();
   while (gettime() < t0 + ticks);
@@ -29,6 +27,8 @@ int __attribute__ ((__section__(".text.main")))
     printf("Unblocking child\n");
     int ok = unblock(pid);
     printf("Unblock -> %d\n", ok);
-    while(1);
+    sleep(1000);
+    printf("Exiting parent\n");
+    exit();
   }
 }
