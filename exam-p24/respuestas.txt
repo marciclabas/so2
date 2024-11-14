@@ -1,0 +1,119 @@
+==============================================================================
+1. Comprensión de Zeos
+==============================================================================
+
+==================================== [1A] ====================================
+
+¿En que dirección de memoria se encuentra la pila justo al empezar la 
+ejecución de la rutina `main` del sistema?
+  
+- 0x00003ff4
+
+¿Como la has encontrado?
+
+- `objdump -d system` --> `main` està a 0x00010010
+- `make emuldbg` + `lbreak 0x00010010` + `r` --> esp = 0x00003ff4
+
+¿Corresponde a algún proceso del vector task?
+- No
+
+¿Cómo lo has hallado?
+- `make gdb` + `print &task` --> task està a 0x15000, que no està gaire aprop de 0x3ff4
+
+
+==================================== [1B] ====================================
+
+En  el  código  inicial  os  damos  el  tratamiento  de  las  excepciones  ya 
+implementado. ¿Es posible ver el código ensamblador de la rutina de 
+tratamiento  de  la  excepción  de  división  por  zero?  Caso  afirmativo  muestra  el 
+código y cómo lo has hallado.
+
+- Codi:
+
+  ```
+  000120c0 <divide_error_routine>:
+   120c0:	55                   	push   %ebp
+   120c1:	89 e5                	mov    %esp,%ebp
+   120c3:	83 ec 14             	sub    $0x14,%esp
+   120c6:	68 5d 29 01 00       	push   $0x1295d
+   120cb:	e8 f0 e3 ff ff       	call   104c0 <printk>
+   120d0:	c7 04 24 40 3b 01 00 	movl   $0x13b40,(%esp)
+   120d7:	e8 e4 e3 ff ff       	call   104c0 <printk>
+   120dc:	83 c4 10             	add    $0x10,%esp
+   120df:	eb fe                	jmp    120df <divide_error_routine+0x1f>
+   120e1:	8d b4 26 00 00 00 00 	lea    0x0(%esi,%eiz,1),%esi
+   120e8:	8d b4 26 00 00 00 00 	lea    0x0(%esi,%eiz,1),%esi
+   120ef:	90                   	nop
+  ```
+
+- Com trobar-ho: `objdump -d system` (i Ctrl+F "divide" ;))
+
+
+==================================== [1C] ====================================
+
+Dado un fichero exam.o que contiene la función shared implementada  
+¿Como  debe  ser   la  línea  (o  líneas)  de  comandos  para  linkar este  objeto  y  que 
+puedas usar la función tanto desde el código de sistema como de usuario?
+
+- En el Makefile, hauríem d'afegir `exam.o` tant a `SYSOBJ` com a `USROBJ`
+- La recipe resultant pel sistema seria:
+  ```
+  ld -T system.lds -o system system.o exam.o # (altres .o's)
+  ```
+- Pel user:
+  ```
+  ld -T user.lds -o user user.o exam.o # (altres .o's)
+  ```
+
+
+==============================================================================
+2. Fork
+==============================================================================
+
+
+==============================================================================
+3. Read
+==============================================================================
+
+a) (0,75 puntos) Implementa el código del wrapper de la llamada read. 
+
+- Added `wrappers.S:read`, declared in `libc.h`
+
+
+b) (0,75 puntos) Implementa el código del handler de esta llamada a sistema.
+
+- Added `entry.S:read_handler`, declared in `interrupt.h`
+- Added `interrupt.c`: `setTrapHandler(130, read_handler, 3);`
+
+
+c) (0,5 puntos) Indica qué estructuras de datos se tienen que añadir y/o 
+modificar. Añade el código necesario para inicializarlas.
+
+- New queue `sys.c`: `list_head blocked_read` + `init_read()`, cridat a `system.c:main`
+- PCB: added `char * read_char_ptr` and `char read_char` fields
+
+d) (0.5 puntos) Implementa la rutina block_for_keyboard.
+
+- Added `sys.C:block_for_keyboard`
+
+e) (0.5 puntos) Implementa la rutina unblock_first.
+
+- Added `sys.C:unblock_first`
+
+f) (1 punto) Implementa el código de la rutina sys_read.
+
+- Added `sys.C:sys_read`
+
+
+g) (1  punto)  ¿Es  necesario  modificar  alguna  otra  llamada  a  sistema  o  parte  del 
+sistema para implementar por completo esta funcionalidad? Si es así 
+implementa los cambios necesarios.
+
+- Hem de canviar la keyboard_routine, sinó no llegirem res :|
+
+- Sé que us agraden molt les funcions void(void), però he fet que `unblock_first` agafi un `char` per així
+  cridar-la des de `keyboard_routine`. Sinó podríem fer-ho amb una global, però confio estareu d'acord en
+  que seria bastant lleig.
+
+- `unblock_first` fica el `char` a `task_struct::read_char`,
+  i en el task_switch es mou a `task_struct::read_char_ptr`
