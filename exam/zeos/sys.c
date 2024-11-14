@@ -9,6 +9,7 @@
 #include <sched.h>
 #include <errs.h>
 #include <system.h>
+#include <libc.h>
 
 #define LECTURA 0
 #define ESCRIPTURA 1
@@ -79,15 +80,20 @@ int sys_fork() {
   for (int page = PAG_LOG_INIT_CODE; page < PAG_LOG_INIT_CODE + NUM_PAG_CODE; page++)
     copy_pt_entry(parent, page, child, page);
 
-  // copy page directory to parent
-  set_ss_pag(get_DIR(parent), 1, get_frame(get_DIR(child), 0));
+  // append child data pages to parent
+  for (int i = 0; i < NUM_PAG_DATA; i++)
+    copy_pt_entry(
+      child, PAG_LOG_INIT_DATA + i,
+      parent, PAG_LOG_INIT_CODE + NUM_PAG_CODE + i // after user code pages
+    );
 
-  // copy data parent -> child
-  // directory 1 has addresses starting with 0x00400000 (9 zeros and a 1)
-  copy_data(L_USER_START, L_USER_START + 0x00400000, NUM_PAG_DATA * PAGE_SIZE);
+  // copy user data pages to temporal entries
+  #define TEMPORAL_START ((PAG_LOG_INIT_CODE+NUM_PAG_CODE)*PAGE_SIZE)
+  copy_data(L_USER_START, TEMPORAL_START, NUM_PAG_DATA*PAGE_SIZE);
 
-  // remove temp directory
-  del_ss_pag(get_DIR(parent), 1);
+  // remove temporal entries from parent
+  for (int i = 0; i < NUM_PAG_DATA; i++)
+    del_ss_pag(get_PT(parent), PAG_LOG_INIT_CODE + NUM_PAG_CODE + i);
 
   // flush TLB
   set_cr3(get_DIR(parent));
@@ -191,34 +197,5 @@ int sys_unblock(int pid) {
     child->pending_unblocks++;
   }
 
-  return 0;
-}
-
-list_head blocked_read;
-
-void init_read() {
-  INIT_LIST_HEAD(&blocked_read);
-}
-
-void block_for_keyboard() {
-  task_struct * curr = current();
-  curr->state = ST_BLOCKED;
-  list_add_tail(&curr->list, &blocked_read);
-  sched_next_rr();
-}
-
-void unblock_first(char c) {
-  if (!list_empty(&blocked_read)) {
-    list_head * it = list_pop(&blocked_read);
-    task_struct * task = list_head_to_task_struct(it);
-    task->read_char = c;
-    list_add_tail(it, &readyqueue);
-    task->state = ST_READY;
-  }
-}
-
-int sys_read(char *b) {
-  current()->read_char_ptr = b;
-  block_for_keyboard();
   return 0;
 }

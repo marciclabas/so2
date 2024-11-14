@@ -1,18 +1,12 @@
 #include <libc.h>
+#include <io.h>
 
 void sleep(int ticks) {
   int t0 = gettime();
   while (gettime() < t0 + ticks);
 }
 
-void read_test() {
-  char c;
-  read(&c);
-  printf("Done: %c\n", c);
-  while(1);
-}
-
-void fork_test() {
+void test_block() {
   int pid = fork();
   if (pid == 0) {
     printf("Blocking child (pid=%d)\n", getpid());
@@ -33,10 +27,12 @@ void fork_test() {
   }
 }
 
+
 int __attribute__ ((__section__(".text.main")))
   main(void)
 {
     /* Next line, tries to move value 0 to CR3 register. This register is a privileged one, and so it will raise an exception */
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
-  fork_test();
+  printf("Hello %c, %d, %s", 'c', 1234, "world!\n");  
+  while(1);
 }
