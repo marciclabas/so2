@@ -57,23 +57,23 @@ PCB.
 
 ```
 // sched.h
-struct task_struct {
-  // ...
-  registers regs;
-};
-
 typedef struct registers {
   unsigned long ebx;
   unsigned long esi;
   unsigned long edi;
 } registers;
+
+struct task_struct {
+  // ...
+  registers regs;
+};
 ```
 
 
 c) Indica el código necesario para implementar las funciones save_regs y 
 restore_regs en lenguaje C.
 
-- Funcions en assembly per llegir/escriure els registres (declarades a `system.h`)
+- Funcions en assembly per llegir/escriure els registres
   ````
   // asm_utils.S
   ENTRY(read_ebx)
@@ -83,9 +83,11 @@ restore_regs en lenguaje C.
   ENTRY(write_ebx)
     movl 4(%esp), %ebx
     ret
+
+  // un parell per cada registre
   ```
 
-- Declarar-les (a `system.h`) i utiliztzar-les:
+- Declarar-les a algun .h i utilitzar-les:
 
   ```
   // sched.c
@@ -106,3 +108,69 @@ restore_regs en lenguaje C.
 d) Indica cómo debe cambiar el contexto del proceso idle en su inicialización. 
 
 -
+
+
+================================================================
+3. Child
+================================================================
+
+a) (0,5 puntos) Modifica el wrapper de la llamada exit.
+
+- `wrappers.S` -> `exit` passa un parametre (via edx)
+- `libc.h` -> `exit` agafa un parametre
+
+b) (0,5 puntos) Implementa el código del wrapper de la llamada waitpid.
+
+- `wrappers.S` -> `waitpid` (amb `int` i passant 2 parametres via edx i ecx)
+- `libc.h` -> `waitpid`
+
+c) (0,5 puntos) Implementa el código del handler de esta llamada a sistema.
+
+- `entry.S` -> `waitpid_handler` (amb `iret`)
+- `interrupt.h` -> declarar
+- `interrupt.c` -> `setTrapHandler(130, waitpid_handler, 3);`
+
+d) (0,5  puntos)  Indica  qué  estructuras  de  datos  se  tienen  que  añadir.  Indica 
+también las estructuras que deben ser modificadas. Añade el código 
+necesario para inicializarlas.
+
+- PCB --> field `int waiting_for` amb el pid que estem esperant
+- Nou estat `ST_ZOMBIE`
+- PCB --> field `int exit_status` amb l'status del exit si estem en zombie
+
+- La resta de coses necessàries (punter al pare, llista de fills) ja les tenim
+
+e) (0,5  puntos)  Implementa  la  rutina  void  block(void)  para  bloquear  al  proceso 
+actual .
+
+- `sys.c:block` --> treu el current de la readyqueue i fa sched_next()
+
+
+f) (0,5  puntos)  Implementa  la  rutina  void  unblock(struct  task_struct*pcb)  para 
+desbloquear un proceso pasado como parámetro.
+
+- `sys.c:unblock` --> fica el pcb a la readyqueue
+
+g) (0,5 puntos) Modifica el código de la rutina sys_exit.
+
+- Si el pare està esperant per ell --> crida unblock i passa-li l'status
+- Sinó, no facis cleanup i entra en estat zombie
+
+h) (1 punto) Implementa el código de la rutina de servicio sys_waitpid.
+
+- Si el fill està en zombi --> retorna immediatament i fes-li cleanup
+- Sinó --> bloqueja't
+
+i) (0,5  puntos)  ¿Es  necesario  modificar  alguna  otra  llamada  a  sistema  o  parte 
+del  sistema  para  implementar  por  completo  esta  funcionalidad?  Si  es  así 
+implementa los cambios necesarios.
+
+- Sí, en algun punt hem de passar l'status al pointer. I necessitem que el pare estigui executant-se
+  perquè l'adreça sigui vàlida. El que faig és guardar-me el pointer al PCB, i copiar-hi al valor
+  en el task switch
+
+
+Puedes  suponer  que  tienes  la  función  struct  task_struct*  find_task_by_pid(int  pid) 
+que retorna el puntero al PCB del proceso con pid PID o NULL si no lo encuentra.
+
+--> Sort, ja la tenia ;)

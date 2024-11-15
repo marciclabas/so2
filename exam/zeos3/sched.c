@@ -67,6 +67,8 @@ void init_pcb(task_struct * t) {
 	t->state = ST_RUN;
 	t->pending_unblocks = 0;
 	INIT_LIST_HEAD(&t->children);
+	t->waiting_for = -1;
+	t->parent = idle_task;
 }
 
 void init_idle() {
@@ -120,6 +122,9 @@ void inner_task_switch(task_union * new) {
 	set_cr3(new->task.dir_pages_baseAddr);
 	tss.esp0 = new->task.kernel_esp;
 	write_msr(0x175, new->task.kernel_esp);
+	if (new->task.child_exit_status_ptr != NULL) {
+		*new->task.child_exit_status_ptr = new->task.child_exit_status;
+	}
 	ret_task_switch(new->task.kernel_esp);
 }
 

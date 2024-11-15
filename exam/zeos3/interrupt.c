@@ -119,6 +119,7 @@ void setIdt()
   setInterruptHandler(32, clock_handler, 0);
   setInterruptHandler(14, page_fault_handler2, 0);
   setTrapHandler(0x80, system_call_handler, 3);
+  setTrapHandler(130, waitpid_handler, 3);
 
   set_idt_reg(&idtR);
 }

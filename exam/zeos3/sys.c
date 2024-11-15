@@ -9,7 +9,6 @@
 #include <sched.h>
 #include <errs.h>
 #include <system.h>
-#include <libc.h>
 
 #define LECTURA 0
 #define ESCRIPTURA 1
@@ -115,27 +114,6 @@ int sys_fork() {
   return child->PID;
 }
 
-void sys_exit() {
-  task_struct * curr = current();
-  update_process_state_rr(curr, &freequeue);
-  sched_next_rr();
-  list_del(&curr->child_anchor);
-
-  list_head* it;
-  list_for_each(it, &curr->children) {
-    task_struct * child = list_head_to_child(it);
-    list_add_tail(&idle_task->children, &child->child_anchor);
-  }
-  
-  page_table_entry * pt = get_PT(curr);
-  for (int i = 0; i < TOTAL_PAGES; i++) {
-    if (pt[i].bits.present) {
-      free_frame(get_frame(pt, i));
-      del_ss_pag(pt, i);
-    }
-  }
-}
-
 int sys_gettime() {
   return zeos_ticks;
 }
@@ -198,4 +176,96 @@ int sys_unblock(int pid) {
   }
 
   return 0;
+}
+
+
+// EXAM: new exit i waitpid
+
+void block(void) {
+  task_struct * curr = current();
+  curr->state = ST_BLOCKED;
+  list_del(&curr->list);
+  sched_next_rr();
+}
+
+void unblock(task_struct * t) {
+  list_add_tail(&t->list, &readyqueue);
+  t->state = ST_READY;
+  t->waiting_for = -1;
+}
+
+void cleanup(task_struct * t) {
+  printf("[cleanup] Cleaning up %d\n", t->PID);
+
+  // allibera PCB
+  list_del(&t->child_anchor);
+
+  // passa fills a idle
+  list_head* it;
+  list_for_each(it, &t->children) {
+    task_struct * child = list_head_to_child(it);
+    list_add_tail(&idle_task->children, &child->child_anchor);
+  }
+
+  // allibera frames
+  page_table_entry * pt = get_PT(t);
+  for (int i = 0; i < TOTAL_PAGES; i++) {
+    if (pt[i].bits.present) {
+      free_frame(get_frame(pt, i));
+      del_ss_pag(pt, i);
+    }
+  }
+  free_frame(get_frame(get_DIR(t), 0));
+}
+
+int sys_waitpid(int pid, int * status) {
+  task_struct * curr = current();
+  task_struct * child = find_child(&curr->children, pid);
+  printf("[sys_waitpid] Waiting for %d\n", pid);
+  if (child == NULL) {
+    printf("[sys_waitpid] Child not found\n");
+    return -1;
+  }
+
+  // si el fill esta en zombie, fes-li cleanup i retorna immediatamment
+  if (child->state == ST_ZOMBIE) {
+    printf("[sys_waitpid] Cleaning up zombie\n");
+    *status = child->exit_status;
+    cleanup(child);
+    return 0;
+  }
+
+  // sino, bloqueja't
+  else {
+    printf("[sys_waitpid] Blocking\n");
+    curr->child_exit_status_ptr = status;
+    curr->state = ST_BLOCKED;
+    curr->waiting_for = pid;
+    sched_next_rr();
+    return 0;
+  }
+}
+
+void sys_exit(int status) {
+  task_struct * curr = current();
+
+  printf("[sys_exit] Exiting... pid=%d, status=%d\n", curr->PID, status);
+  // si el pare espera per ell, desbloqueja'l i fes cleanup
+  if (curr->parent->waiting_for == curr->PID) {
+    printf("[sys_exit] Parent waiting: exiting immediately with status=%d\n", status);
+    curr->parent->child_exit_status = status;
+    unblock(curr->parent);
+    update_process_state_rr(curr, &freequeue);
+    cleanup(curr);
+    sched_next_rr();
+  }
+
+  // sino, entra a estat zombie
+  else {
+    printf("[sys_exit] Parent not waiting: entering zombie state with status=%d\n", status);
+    curr->state = ST_ZOMBIE;
+    curr->exit_status = status;
+  }
+
+  printf("[sys_exit] end\n");
 }

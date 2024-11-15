@@ -38,7 +38,31 @@ end:
     call set_errno_eax; \
     ret;
 
-WRAPPER(exit, 1)
+ENTRY(exit)
+  pushl %ebx;
+  movl 8(%esp), %edx; // parametre
+  movl $1, %eax;
+  pushl $after_exit;
+  pushl %ebp;
+  movl %esp, %ebp;
+  sysenter;
+after_exit:
+  popl %ebp;
+  addl $4, %esp;
+  popl %ebx;
+  call set_errno_eax;
+  ret;
+
+ENTRY(waitpid)
+  pushl %ebx
+  movl 8(%esp), %edx
+  movl 12(%esp), %ecx
+  int $130
+  
+  popl %ebx
+  call set_errno_eax
+  ret
+
 WRAPPER(fork, 2)
 WRAPPER(write, 4)
 WRAPPER(block, 5)

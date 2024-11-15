@@ -134,3 +134,9 @@ sysenter_fin:
   movl 12(%ESP), %ECX // User stack address
   sti // Enable interrupts again
   sysexit
+
+ENTRY(waitpid_handler)
+  SAVE_ALL
+  call sys_waitpid
+  RESTORE_ALL
+  iret

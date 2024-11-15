@@ -12,7 +12,7 @@
 #define NR_TASKS      10
 #define KERNEL_STACK_SIZE	1024
 
-enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
+enum state_t { ST_RUN, ST_READY, ST_BLOCKED, ST_ZOMBIE };
 
 typedef struct task_struct {
   int PID;			/* Process ID. This MUST be the first field of the struct. */
@@ -25,6 +25,10 @@ typedef struct task_struct {
   list_head children;
   list_head child_anchor;
   struct task_struct *parent;
+  int waiting_for; // pid of the child we're waiting for, -1 if none
+  int child_exit_status; // exit status of the dead child
+  int * child_exit_status_ptr; // pointer to the return status of waitpid
+  int exit_status; // exit status when in zombie state
 } task_struct;
 
 void print_pcb(task_struct *pcb);

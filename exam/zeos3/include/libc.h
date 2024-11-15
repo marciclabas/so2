@@ -23,7 +23,9 @@ void printf(const char *format, ...);
 
 int gettime();
 void perror();
-void exit();
+void exit(int error);
+
+int waitpid(int pid, int *status);
 
 void block();
 int unblock(int pid);
