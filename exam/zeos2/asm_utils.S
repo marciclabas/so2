@@ -14,3 +14,27 @@ ENTRY(write_msr)
 ENTRY(read_ebp)
   movl %ebp, %eax
   ret
+
+ENTRY(read_ebx)
+  movl %ebx, %eax
+  ret
+
+ENTRY(read_esi)
+  movl %esi, %eax
+  ret
+
+ENTRY(read_edi)
+  movl %edi, %eax
+  ret
+
+ENTRY(write_ebx)
+  movl 4(%esp), %ebx
+  ret
+
+ENTRY(write_esi)
+  movl 4(%esp), %esi
+  ret
+
+ENTRY(write_edi)
+  movl 4(%esp), %edi
+  ret

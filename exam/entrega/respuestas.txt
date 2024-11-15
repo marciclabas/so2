@@ -1,3 +1,8 @@
+================================================================
+1. Comprenzión Zeos
+================================================================
+
+
 ============================= [1a] =============================
 
 ¿En qué dirección de memoria se encuentra el PCB del 3r proceso del 
@@ -35,3 +40,69 @@ de comandos para compilar y linkar este fichero en la imagen de sistema.
   
 2. Linkar (amb la resta d'objectes a `system`):
   `ld -g -melf_i386 -T system.lds -o system system.o exam.o` (i la resta de .o's)
+
+
+
+================================================================
+2. Task Switch
+================================================================
+
+a) ¿Funcionará este código? ¿Por qué?
+
+- 
+
+b) En lugar de guardar EBX, ESI y EDI en la pila nos planteamos usar un campo 
+en el PCB. Define una estructura para guardar estos 3 registros y añádela al 
+PCB.
+
+```
+// sched.h
+struct task_struct {
+  // ...
+  registers regs;
+};
+
+typedef struct registers {
+  unsigned long ebx;
+  unsigned long esi;
+  unsigned long edi;
+} registers;
+```
+
+
+c) Indica el código necesario para implementar las funciones save_regs y 
+restore_regs en lenguaje C.
+
+- Funcions en assembly per llegir/escriure els registres (declarades a `system.h`)
+  ````
+  // asm_utils.S
+  ENTRY(read_ebx)
+    movl %ebx, %eax
+    ret
+
+  ENTRY(write_ebx)
+    movl 4(%esp), %ebx
+    ret
+  ```
+
+- Declarar-les (a `system.h`) i utiliztzar-les:
+
+  ```
+  // sched.c
+  void save_regs(task_struct * t) {
+    t->regs.ebx = read_ebx();
+    t->regs.edi = read_edi();
+    t->regs.esi = read_esi();
+  }
+
+  void restore_regs(task_struct * t) {
+    write_ebx(t->regs.ebx);
+    write_edi(t->regs.edi);
+    write_esi(t->regs.esi);
+  }
+  ```
+
+
+d) Indica cómo debe cambiar el contexto del proceso idle en su inicialización. 
+
+-

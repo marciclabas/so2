@@ -55,6 +55,18 @@ int allocate_DIR(task_struct *t)
 	return 1;
 }
 
+void save_regs(task_struct * t) {
+	t->regs.ebx = read_ebx();
+	t->regs.edi = read_edi();
+	t->regs.esi = read_esi();
+}
+
+void restore_regs(task_struct * t) {
+	write_ebx(t->regs.ebx);
+	write_edi(t->regs.edi);
+	write_esi(t->regs.esi);
+}
+
 void cpu_idle(void) {
 	printf("cpu_idle\n");
 	__asm__ __volatile__("sti": : :"memory");

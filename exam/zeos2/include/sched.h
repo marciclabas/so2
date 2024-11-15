@@ -14,6 +14,12 @@
 
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 
+typedef struct registers {
+  unsigned long ebx;
+  unsigned long esi;
+  unsigned long edi;
+} registers;
+
 typedef struct task_struct {
   int PID;			/* Process ID. This MUST be the first field of the struct. */
   page_table_entry * dir_pages_baseAddr;
@@ -25,6 +31,7 @@ typedef struct task_struct {
   list_head children;
   list_head child_anchor;
   struct task_struct *parent;
+  registers regs;
 } task_struct;
 
 void print_pcb(task_struct *pcb);
