@@ -1,0 +1,37 @@
+============================= [1a] =============================
+
+¿En qué dirección de memoria se encuentra el PCB del 3r proceso del 
+vector de tareas?
+
+- 0x17000
+
+¿Cómo lo has hallado?
+
+- `make gdb`
+- `print &task[2]`
+
+============================= [1b] =============================
+
+¿Qué valor tiene el registro ESP antes de ejecutar la 1ª instrucción del 
+código de usuario?
+
+- 0x00113ff0
+
+¿Cómo lo has hallado?
+
+- `objump -d user` -> `main` està a 0x00114000
+- `make emuldbg`
+- `lb 0x00114000` + `c` (per anar al `main`)
+- `r` (per imprimir els registres)
+
+
+============================= [1c] =============================
+
+Dado  el  fichero  exam.s  con  código  en ensamblador,  indica  las  líneas 
+de comandos para compilar y linkar este fichero en la imagen de sistema.
+
+1. Compilar (a `exam.o`):
+  `as86 -0 -ao exam.o exam.s`
+  
+2. Linkar (amb la resta d'objectes a `system`):
+  `ld -g -melf_i386 -T system.lds -o system system.o exam.o` (i la resta de .o's)
