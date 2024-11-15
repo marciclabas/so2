@@ -107,12 +107,20 @@ restore_regs en lenguaje C.
 
 d) Indica cómo debe cambiar el contexto del proceso idle en su inicialización. 
 
--
+- No cal que canvii. Ficarem valors randoms als registres, pero i que? L'idle tampoc els utilitza.
 
 
 ================================================================
 3. Child
 ================================================================
+
+**NOTA**
+
+==================================================================================================
+M'he estat barallant una estona amb el codi que ens doneu, però hi ha algunes coses que hem fet
+diferent i no acabava d'entendre així que ho he fet amb el meu :)
+==================================================================================================
+
 
 a) (0,5 puntos) Modifica el wrapper de la llamada exit.
 
