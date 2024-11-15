@@ -19,9 +19,9 @@ ENTRY(sys_call_table)
 	.long sys_getkey // 14
 	.long sys_ni_syscall // 15
 	.long sys_ni_syscall // 16
-	.long sys_ni_syscall // 17
-	.long sys_ni_syscall // 18
-	.long sys_ni_syscall // 19
+	.long sys_gotoXY // 17
+	.long sys_changeColor // 18
+	.long sys_clrscr // 19
 	.long sys_getpid // 20
 
 .globl MAX_SYSCALL

@@ -7,6 +7,7 @@
 #include <types.h>
 #include <utils.h>
 
+
 /**************/
 /** Screen  ***/
 /**************/
@@ -15,6 +16,9 @@
 #define NUM_ROWS    25
 
 Byte x, y=19;
+int COLOR = 2; 
+//bg: 8 7 6 5 Fg: 4 3 2 1
+//      r g b       r g b
 
 /* Read a byte from 'port' */
 Byte inb (unsigned short port)
@@ -35,7 +39,7 @@ void printc(char c)
   }
   else
   {
-  Word ch = (Word) (c & 0x00FF) | 0x0200;
+  Word ch = (Word) (c & 0x00FF) | (COLOR << 8);
   Word *screen = (Word *)0xb8000;
   screen[(y * NUM_COLUMNS + x)] = ch;
   if (++x >= NUM_COLUMNS)
@@ -44,6 +48,31 @@ void printc(char c)
   y=(y+1)%NUM_ROWS;
   }
   }
+}
+
+int sys_clrscr(char* b){
+  char c;
+  if(b == NULL) c = ' ';
+  else c = *b;
+  
+  for(int i = 0; i<NUM_ROWS; i++){
+  	for(int j = 0; j<NUM_COLUMNS; j++) printc(c);
+  }
+  return 1;
+}
+
+
+int sys_changeColor(int fg, int bg){
+  int fgc = fg % 8;
+  int bgc = bg % 8;
+  COLOR = (bgc << 4) + fgc;
+  return 1;
+}
+
+int sys_gotoXY(int px,int py){
+  x = px % NUM_COLUMNS;
+  y = py % NUM_ROWS;
+  return 1;
 }
 
 void printc_xy(Byte mx, Byte my, char c)
