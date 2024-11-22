@@ -187,6 +187,15 @@ void inner_printf(void (*print)(const char*s), const char *fmt, va_list args) {
       int2base(value, buffer, 16);
       print(buffer);
       i += 2;
+    } else if (fmt[i] == '%' && fmt[i+1] == 'c') {
+      char c = va_arg(args, int);
+      char tmp[] = {c, '\0'};
+      print(tmp);
+      i += 2;
+    } else if (fmt[i] == '%' && fmt[i+1] == 's') {
+      char *s = va_arg(args, char*);
+      print(s);
+      i += 2;
     } else {
       char tmp[] = {fmt[i], '\0'};
       print(tmp);

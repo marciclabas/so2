@@ -96,6 +96,9 @@ int __attribute__((__section__(".text.main")))
   /* Initialize task 1 data */
   init_task1();
 
+  init_buff(&keyboard_buffer);
+  INIT_LIST_HEAD(&key_blocked);
+
   /* Move user code/data now (after the page table initialization) */
   copy_data((void *) KERNEL_START + *p_sys_size, (void*)L_USER_START, *p_usr_size);
 

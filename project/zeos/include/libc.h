@@ -9,6 +9,7 @@
 #include <stats.h>
 
 int write(int fd, const char *buffer, int size);
+int getkey(char* c, int timeout);
 
 void itoa(int a, char *b);
 void int2base(int a, char *b, int base);

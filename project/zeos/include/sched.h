@@ -25,6 +25,7 @@ typedef struct task_struct {
   list_head children;
   list_head child_anchor;
   struct task_struct *parent;
+  char key;
 } task_struct;
 
 void print_pcb(task_struct *pcb);

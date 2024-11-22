@@ -14,6 +14,27 @@
 Gate idt[IDT_ENTRIES];
 Register    idtR;
 
+
+buffer_circular keyboard_buffer;
+
+void init_buff(buffer_circular* buff){
+  buff->start = 0;
+  buff->end = 0;
+}
+
+void buffer_add(char c, buffer_circular* buffer){
+  buffer->buff[buffer->end] = c;
+  buffer->end = (buffer->end + 1) % BUFFER_SIZE;
+  if(buffer->start == buffer->end) buffer->start = (buffer->start + 1) % BUFFER_SIZE;
+}
+
+char buffer_pop(buffer_circular* buffer){
+  if(buffer->end == buffer->start) return -1;
+  char ret = buffer->buff[buffer->start];
+  buffer->start = (buffer->start + 1) % BUFFER_SIZE;
+  return ret;
+}
+
 char char_map[] =
 {
   '\0','\0','1','2','3','4','5','6',
@@ -30,6 +51,8 @@ char char_map[] =
   '\0','\0','\0','\0','\0','\0','\0','\0',
   '\0','\0'
 };
+
+
 
 void setInterruptHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 {
@@ -76,23 +99,17 @@ void setTrapHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 }
 
 void keyboard_routine() {
-  printk("Keyboard: (");
   unsigned char inp = inb(0x60);
 
   int keyup = inp & 0x80;
   char c = char_map[inp & 0x7F];
   
   if (!keyup) {
-    if (c != '\0')
-      printc(c);
+    int ret = key_unblock(c);
+    printf("Unblock ret: %d\n", ret);
+    if (!ret)
+      buffer_add(c, &keyboard_buffer);
   }
-  else {
-    printk("Key up");
-    // if (c == 'a') {
-    //   task_switch(idle_task);
-    // }
-  }
-  printk(")\n");
 }
 
 void clock_routine() {

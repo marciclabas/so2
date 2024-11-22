@@ -9,6 +9,16 @@
 
 #define IDT_ENTRIES 256
 
+#define BUFFER_SIZE 8
+
+typedef struct buffer_circular {
+  char buff[BUFFER_SIZE];
+  int start;
+  int end;
+} buffer_circular;
+
+extern buffer_circular keyboard_buffer;
+
 extern Gate idt[IDT_ENTRIES];
 extern Register idtR;
 
@@ -21,5 +31,10 @@ void clock_handler();
 void page_fault_handler2();
 void system_call_handler();
 void syscall_handler_sysenter();
+void buffer_add(char c, buffer_circular* buffer);
+char buffer_pop(buffer_circular* buffer);
+void init_buff(buffer_circular* buffer);
+
+
 
 #endif  /* __INTERRUPT_H__ */

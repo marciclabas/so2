@@ -10,9 +10,39 @@
 #include <errs.h>
 #include <system.h>
 #include <libc.h>
+#include <interrupt.h>
 
 #define LECTURA 0
 #define ESCRIPTURA 1
+
+list_head key_blocked;
+
+int key_unblock(char c) {
+  printf("Unblock %c\n", c);
+  if (list_empty(&key_blocked))
+    return 0;
+
+  list_head * head = list_pop(&key_blocked);
+  task_struct * t = list_head_to_task_struct(head);
+  // t->key = c;
+  list_add_tail(&t->list, &readyqueue);
+  return 1;
+}
+
+int sys_getkey(char* c, int timeout){
+  char ret = buffer_pop(&keyboard_buffer);
+  if(ret == -1) {
+    list_add_tail(current(), &key_blocked);
+    printf("Rescheduling...\n");
+    sched_next_rr();
+    printf("Continue...\n");
+    *c = current()->key;
+  }
+  else {
+    *c = ret;
+  }
+  return 0;
+}
 
 int check_fd(int fd, int permissions)
 {
