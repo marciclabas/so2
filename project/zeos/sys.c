@@ -18,25 +18,41 @@
 list_head key_blocked;
 
 int key_unblock(char c) {
-  printf("Unblock %c\n", c);
   if (list_empty(&key_blocked))
     return 0;
 
   list_head * head = list_pop(&key_blocked);
   task_struct * t = list_head_to_task_struct(head);
-  // t->key = c;
+  t->key = c;
   list_add_tail(&t->list, &readyqueue);
   return 1;
 }
 
+void getkey_blocked_reduce_time(){
+	list_head *it, *it2;
+	list_for_each_safe(it, it2, &key_blocked){
+		task_struct* task = list_head_to_task_struct(it);
+		task->time_blocked--;
+		if(task->time_blocked <= 0){//Si ha acabat el temps d'espera el desbloquejem
+			list_del(it);
+			task->key = 'A';
+			list_add_tail(it,&readyqueue);
+		}
+	}
+}
+
 int sys_getkey(char* c, int timeout){
+
   char ret = buffer_pop(&keyboard_buffer);
   if(ret == -1) {
-    list_add_tail(current(), &key_blocked);
-    printf("Rescheduling...\n");
+    list_add_tail(&current()->list, &key_blocked);
+    current()->time_blocked = timeout;
     sched_next_rr();
-    printf("Continue...\n");
     *c = current()->key;
+    
+    if(current()->key == 'A'){
+  	return -1;
+    }
   }
   else {
     *c = ret;

@@ -106,16 +106,18 @@ void keyboard_routine() {
   
   if (!keyup) {
     int ret = key_unblock(c);
-    printf("Unblock ret: %d\n", ret);
     if (!ret)
       buffer_add(c, &keyboard_buffer);
   }
 }
 
 void clock_routine() {
+  getkey_blocked_reduce_time();
   zeos_ticks++;
   zeos_show_clock();
   schedule();
+  
+  
 }
 
 void page_fault_routine2(int access_addr, int instr_addr) {
