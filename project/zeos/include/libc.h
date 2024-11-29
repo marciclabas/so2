@@ -29,4 +29,10 @@ void exit();
 void block();
 int unblock(int pid);
 
+int clrscr(char* b);
+int changeColor(int fg, int bg);
+int gotoXY(int px,int py);
+
+int threadCreateWithStack( void (*function)(void* arg), int N, void* parameter);
+
 #endif  /* __LIBC_H__ */

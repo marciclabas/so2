@@ -20,6 +20,11 @@ int new_pid() {
 	return pid_counter++;
 }
 
+int tid_counter = 2;
+int new_tid() {
+	return tid_counter++;
+}
+
 task_struct *list_head_to_task_struct(list_head *l) {
   return list_entry(l, task_struct, list);
 }
@@ -63,6 +68,7 @@ void cpu_idle(void) {
 
 void init_pcb(task_struct * t) {
 	t->PID = -1;
+	t->TID = -1;
 	t->quantum = 0;
 	t->state = ST_RUN;
 	t->pending_unblocks = 0;
@@ -74,6 +80,7 @@ void init_idle() {
 	task_union * task = (task_union*) list_head_to_task_struct(head);
 	
 	task->task.PID = 0;
+	task->task.TID = 0;
 	allocate_DIR(&task->task);
 
 	// prepare for context switch:
@@ -95,6 +102,7 @@ void init_task1() {
 	
 	set_quantum(&task->task, 100);
 	task->task.PID = 1;
+	task->task.TID = 1;
 	allocate_DIR(&task->task);
 	set_user_pages(&task->task);
 	task->task.kernel_esp = (unsigned int) &task->stack[KERNEL_STACK_SIZE];

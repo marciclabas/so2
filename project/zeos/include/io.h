@@ -17,8 +17,8 @@ void printk(const char *string);
 void print_bits(int value, char * output, int size);
 void print_hex(int value, char * output, int size);
 void printf(const char *format, ...);
-int sys_gotoXY(int x, int y);
-int sys_changeColor(int fg, int bg);
-int sys_clrscr(char* b);
+// int sys_gotoXY(int x, int y);
+// int sys_changeColor(int fg, int bg);
+// int sys_clrscr(char* b);
 
 #endif  /* __IO_H__ */

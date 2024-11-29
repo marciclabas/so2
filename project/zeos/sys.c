@@ -35,7 +35,7 @@ void getkey_blocked_reduce_time(){
 		task->time_blocked--;
 		if(task->time_blocked <= 0){//Si ha acabat el temps d'espera el desbloquejem
 			list_del(it);
-			task->key = 'A';
+			task->key = -1;
 			list_add_tail(it,&readyqueue);
 		}
 	}
@@ -50,7 +50,7 @@ int sys_getkey(char* c, int timeout){
     sched_next_rr();
     *c = current()->key;
     
-    if(current()->key == 'A'){
+    if(current()->key == -1){
   	return -1;
     }
   }
@@ -83,6 +83,25 @@ void copy_pt_entry(
   set_ss_pag(get_PT(to), idx_to, get_frame(get_PT(from), idx_from));
 }
 
+int allocate_pages(task_struct * task, int num_pages, int start_page) {
+  int frames[num_pages];
+  for (int i = 0; i < num_pages; i++) {
+    int page = start_page + i;
+    unsigned int frame = alloc_frame();
+    if (frame == -1) {
+      for (int j = 0; j < i; j++)
+        free_frame(frames[j]);
+      return -1;
+    }
+  }
+
+  for (int i = 0; i < num_pages; i++) {
+    int page = start_page + i;
+    set_ss_pag(get_PT(task), page, frames[i]);
+  }
+  return 0;
+}
+
 int allocate_user_data_pages(task_struct * task) {
   for (int i = 0; i < NUM_PAG_DATA; i++) {
     int page = PAG_LOG_INIT_DATA + i;
@@ -99,6 +118,9 @@ int allocate_user_data_pages(task_struct * task) {
 int ret_from_fork() {
   return 0;
 }
+
+#define TEMPORAL_START ((PAG_LOG_INIT_CODE+NUM_PAG_CODE)*PAGE_SIZE)
+#define STACKS_START (TEMPORAL_START + NUM_PAG_DATA*PAGE_SIZE)
 
 int sys_fork() {
 
@@ -134,7 +156,7 @@ int sys_fork() {
     );
 
   // copy user data pages to temporal entries
-  #define TEMPORAL_START ((PAG_LOG_INIT_CODE+NUM_PAG_CODE)*PAGE_SIZE)
+  
   copy_data(L_USER_START, TEMPORAL_START, NUM_PAG_DATA*PAGE_SIZE);
 
   // remove temporal entries from parent
@@ -145,6 +167,7 @@ int sys_fork() {
   set_cr3(get_DIR(parent));
 
   child->PID = new_pid();
+  child->TID = new_tid();
   child->state = ST_READY;
   child->kernel_esp += (DWord) child - (DWord) parent; // offset from the base is the same
   // kernel_esp didn't account for the new context, so we need to add it
@@ -244,4 +267,67 @@ int sys_unblock(int pid) {
   }
 
   return 0;
+}
+
+int find_pages(int num_pages, page_table_entry* pt, int start) {
+  if (start + num_pages > 1024)
+    return -1;
+
+  for (int i = 0; i < num_pages; i++) {
+    int page = start + i;
+    if (!pt[page].bits.avail)
+      return find_pages(num_pages, pt, page+1);
+  }
+  return start;
+}
+
+
+int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* parameter) {
+  if (list_empty(&freequeue))
+    return -1;
+
+  list_head* head = list_pop(&freequeue);
+  task_struct* child = list_head_to_task_struct(head);
+  unsigned long * child_stack = (unsigned long *) child;
+  task_struct* parent = current();
+
+
+  copy_data(parent, child, sizeof(task_union));
+
+  int start_page = find_pages(N, get_PT(child), STACKS_START >> 12);
+  if (start_page == -1) {
+    list_add_tail(&child->list, &freequeue);
+    return -1;
+  }
+  
+  if(allocate_pages(child, N, start_page) == -1) {
+    list_add_tail(&child->list, &freequeue);
+    return -1;
+  }
+
+  unsigned long stack_top = start_page << 12;
+  
+  unsigned long* user_stack = (unsigned long*) stack_top;
+  user_stack[PAGE_SIZE*N-2] = 0;
+  user_stack[PAGE_SIZE*N-1] = parameter;
+
+  child_stack[KERNEL_STACK_SIZE-2] = stack_top +;
+
+  
+
+  child->TID = new_tid();
+  child->state = ST_READY;
+  child->kernel_esp += (DWord) child - (DWord) parent; // offset from the base is the same
+  // kernel_esp didn't account for the new context, so we need to add it
+  child->kernel_esp -= 19 * sizeof(DWord); // 17 context + 1 ebp + 1 ret_from_fork
+  DWord * esp = (DWord*) child->kernel_esp;
+  esp[0] = 0; // fake ebp
+  esp[1] = (DWord) &ret_from_fork;
+
+  INIT_LIST_HEAD(&child->children);
+  child->parent = parent;
+  list_add_tail(&child->child_anchor, &parent->children);
+
+  list_add_tail(&child->list, &readyqueue);
+  return child->PID;
 }

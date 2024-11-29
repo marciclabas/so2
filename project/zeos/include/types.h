@@ -133,7 +133,7 @@ typedef Word Selector;
 
 #define NULL 0
 
-typedef union 
+typedef union page_table_entry 
 {
   unsigned int entry;
   struct {    

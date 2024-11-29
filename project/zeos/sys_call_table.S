@@ -18,7 +18,7 @@ ENTRY(sys_call_table)
 	.long sys_ni_syscall // 13
 	.long sys_getkey // 14
 	.long sys_ni_syscall // 15
-	.long sys_ni_syscall // 16
+	.long sys_threadCreateWithStack // 16
 	.long sys_gotoXY // 17
 	.long sys_changeColor // 18
 	.long sys_clrscr // 19

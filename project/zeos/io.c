@@ -51,12 +51,15 @@ void printc(char c)
 }
 
 int sys_clrscr(char* b){
-  char c;
-  if(b == NULL) c = ' ';
-  else c = *b;
-  
-  for(int i = 0; i<NUM_ROWS; i++){
-  	for(int j = 0; j<NUM_COLUMNS; j++) printc(c);
+  if(b != NULL) {
+    int ok = access_ok(VERIFY_READ, b, 2*NUM_COLUMNS*NUM_ROWS);
+    Word *screen = (Word *)0xb8000;
+    copy_data(b, screen, 2*NUM_ROWS*NUM_COLUMNS);
+  }
+  else {
+    for(int i = 0; i<NUM_ROWS; i++)
+      for(int j = 0; j<NUM_COLUMNS; j++)
+        printc(' ');
   }
   return 1;
 }
