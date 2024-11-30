@@ -19,7 +19,61 @@ end:
   ret
 
 // wrapper without parameters
-#define WRAPPER(name, code) \
+#define WRAPPER0(name, code) \
+  ENTRY(name) \
+    pushl %ebx; \
+    /* parameters */ \
+    movl $code, %eax; \
+    pushl $after_ ## name; \
+    pushl %ebp; \
+    movl %esp, %ebp; \
+    sysenter; \
+  after_ ## name: \
+    popl %ebp; \
+    addl $4, %esp; \
+    popl %ebx; \
+    call set_errno_eax; \
+    ret;
+
+// wrapper with 1 parameter
+#define WRAPPER1(name, code) \
+  ENTRY(name) \
+    pushl %ebx; \
+    /* parameters */ \
+    movl 8(%esp), %edx; \
+    movl $code, %eax; \
+    pushl $after_ ## name; \
+    pushl %ebp; \
+    movl %esp, %ebp; \
+    sysenter; \
+  after_ ## name: \
+    popl %ebp; \
+    addl $4, %esp; \
+    popl %ebx; \
+    call set_errno_eax; \
+    ret;
+
+// wrapper with 2 parameters
+#define WRAPPER2(name, code) \
+  ENTRY(name) \
+    pushl %ebx; \
+    /* parameters */ \
+    movl 8(%esp), %edx; \
+    movl 12(%esp), %ecx; \
+    movl $code, %eax; \
+    pushl $after_ ## name; \
+    pushl %ebp; \
+    movl %esp, %ebp; \
+    sysenter; \
+  after_ ## name: \
+    popl %ebp; \
+    addl $4, %esp; \
+    popl %ebx; \
+    call set_errno_eax; \
+    ret;
+
+// wrapper with 3 parameters
+#define WRAPPER3(name, code) \
   ENTRY(name) \
     pushl %ebx; \
     /* parameters */ \
@@ -38,15 +92,15 @@ end:
     call set_errno_eax; \
     ret;
 
-WRAPPER(exit, 1)
-WRAPPER(fork, 2)
-WRAPPER(write, 4)
-WRAPPER(block, 5)
-WRAPPER(unblock, 6)
-WRAPPER(gettime, 10)
-WRAPPER(getpid, 20)
-WRAPPER(getkey, 14)
-WRAPPER(threadCreateWithStack, 16)
-WRAPPER(gotoXY, 17)
-WRAPPER(changeColor,18)
-WRAPPER(clrscr,19)
+WRAPPER0(exit, 1)
+WRAPPER0(fork, 2)
+WRAPPER3(write, 4)
+WRAPPER0(block, 5)
+WRAPPER1(unblock, 6)
+WRAPPER0(gettime, 10)
+WRAPPER2(getkey, 14)
+WRAPPER3(threadCreateWithStack, 16)
+WRAPPER2(gotoXY, 17)
+WRAPPER2(changeColor,18)
+WRAPPER1(clrscr,19)
+WRAPPER0(getpid, 20)
