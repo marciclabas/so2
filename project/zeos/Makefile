@@ -17,7 +17,6 @@ OBJCOPY = objcopy -O binary -R .note -R .comment -S
 
 INCLUDEDIR = include
 
-
 CFLAGS = -m32 -O2  -g -fno-omit-frame-pointer -ffreestanding -Wall -I$(INCLUDEDIR) -fno-PIC
 ASMFLAGS = -I$(INCLUDEDIR)
 LDFLAGS = -g -melf_i386
@@ -44,6 +43,7 @@ USROBJ = \
 	libc.o \
 	wrappers.o \
 	utils.o \
+	test.o \
 	# libjp.a \
 
 all:zeos.bin dump
@@ -79,6 +79,8 @@ wrappers.s: wrappers.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 
 sys_call_table.s: sys_call_table.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
+
+test.o:test.c $(INCLUDEDIR)/libc.h
 
 user.o:user.c $(INCLUDEDIR)/libc.h
 
