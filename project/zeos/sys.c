@@ -83,36 +83,8 @@ void copy_pt_entry(
   set_ss_pag(get_PT(to), idx_to, get_frame(get_PT(from), idx_from));
 }
 
-int allocate_pages(task_struct * task, int num_pages, int start_page) {
-  int frames[num_pages];
-  for (int i = 0; i < num_pages; i++) {
-    int page = start_page + i;
-    unsigned int frame = alloc_frame();
-    if (frame == -1) {
-      for (int j = 0; j < i; j++)
-        free_frame(frames[j]);
-      return -1;
-    }
-  }
-
-  for (int i = 0; i < num_pages; i++) {
-    int page = start_page + i;
-    set_ss_pag(get_PT(task), page, frames[i]);
-  }
-  return 0;
-}
-
 int allocate_user_data_pages(task_struct * task) {
-  for (int i = 0; i < NUM_PAG_DATA; i++) {
-    int page = PAG_LOG_INIT_DATA + i;
-    unsigned int frame = alloc_frame();
-    if (frame == -1) {
-      free_user_pages(task);
-      return -1;
-    }
-    set_ss_pag(get_PT(task), page, frame);
-  }
-  return 0;
+  return alloc_pages(task, NUM_PAG_DATA, PAG_LOG_INIT_DATA);
 }
 
 int ret_from_fork() {
@@ -269,22 +241,12 @@ int sys_unblock(int pid) {
   return 0;
 }
 
-int find_pages(int num_pages, page_table_entry* pt, int start) {
-  if (start + num_pages > 1024)
-    return -1;
-
-  for (int i = 0; i < num_pages; i++) {
-    int page = start + i;
-    if (!pt[page].bits.avail)
-      return find_pages(num_pages, pt, page+1);
-  }
-  return start;
-}
-
 
 int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* parameter) {
-  if (list_empty(&freequeue))
+  if (list_empty(&freequeue)) {
+    printf("Error creating thread: no PCBs available\n");
     return -1;
+  }
 
   list_head* head = list_pop(&freequeue);
   task_struct* child = list_head_to_task_struct(head);
@@ -294,13 +256,16 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
 
   copy_data(parent, child, sizeof(task_union));
 
-  int start_page = find_pages(N, get_PT(child), STACKS_START >> 12);
+  int stacks_start = STACKS_START;
+  int start_page = find_empty_pages(get_PT(child), N, stacks_start >> 12);
   if (start_page == -1) {
+    printf("Error creating thread: no pages available\n");
     list_add_tail(&child->list, &freequeue);
     return -1;
   }
-  
-  if(allocate_pages(child, N, start_page) == -1) {
+
+  if (alloc_pages(child, N, start_page) == -1) {
+    printf("Error creating thread: no frames available\n");
     list_add_tail(&child->list, &freequeue);
     return -1;
   }
@@ -308,26 +273,26 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
   unsigned long stack_top = start_page << 12;
   
   unsigned long* user_stack = (unsigned long*) stack_top;
-  user_stack[PAGE_SIZE*N-2] = 0;
-  user_stack[PAGE_SIZE*N-1] = parameter;
 
-  child_stack[KERNEL_STACK_SIZE-2] = stack_top +;
-
-  
+  int num_entries = PAGE_SIZE*N/sizeof(unsigned long);
+  user_stack[num_entries-2] = 0;
+  user_stack[num_entries-1] = parameter;
 
   child->TID = new_tid();
   child->state = ST_READY;
   child->kernel_esp += (DWord) child - (DWord) parent; // offset from the base is the same
   // kernel_esp didn't account for the new context, so we need to add it
   child->kernel_esp -= 19 * sizeof(DWord); // 17 context + 1 ebp + 1 ret_from_fork
+
   DWord * esp = (DWord*) child->kernel_esp;
   esp[0] = 0; // fake ebp
   esp[1] = (DWord) &ret_from_fork;
-
-  INIT_LIST_HEAD(&child->children);
-  child->parent = parent;
-  list_add_tail(&child->child_anchor, &parent->children);
-
+  // user eip: 4-th from bottom
+  esp[14] = (unsigned long) function;
+  // user esp: 1-th from bottom
+  esp[17] = &user_stack[num_entries-2];
+  
   list_add_tail(&child->list, &readyqueue);
-  return child->PID;
+
+  return child->TID;
 }
