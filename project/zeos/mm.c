@@ -262,7 +262,52 @@ void del_ss_pag(page_table_entry *PT, unsigned logical_page)
 
 /* get_frame - Returns the physical frame associated to page 'logical_page' */
 unsigned int get_frame (page_table_entry *PT, unsigned int logical_page){
-     return PT[logical_page].bits.pbase_addr; 
+  return PT[logical_page].bits.pbase_addr; 
+}
+
+/* Allocate `n` frames and put them in `frames`. Returns `0` if OK, `-1` otherwise */
+int alloc_frames(int n, int* frames) {
+  for (int i = 0; i < n; i++) {
+    unsigned int frame = alloc_frame();
+    if (frame == -1) {
+      for (int j = 0; j < i; j++)
+        free_frame(frames[j]);
+      return -1;
+    }
+    frames[i] = frame;
+  }
+  return 0;
+}
+
+
+/** Allocate pages `get_PT(task)[start:start+n]`
+ * - Returns `0` if OK, `-1` otherwise
+ */
+int alloc_pages(task_struct* task, int n, int start) {
+  int frames[n];
+  if (alloc_frames(n, frames) < 0)
+    return -1;
+    
+  for (int i = 0; i < n; i++) {
+    int page = start + i;
+    set_ss_pag(get_PT(task), page, frames[i]);
+  }
+  return 0;
+}
+
+/** Find `n` consecutive pages in `pt[start:]`.
+ * - Returns the index of the first page if found, `-1` otherwise
+ */
+int find_empty_pages(page_table_entry* pt, int n, int start) {
+  if (start + n > 1024)
+    return -1;
+
+  for (int i = 0; i < n; i++) {
+    int page = start + i;
+    if (pt[page].bits.present) // if present, restart the search
+      return find_empty_pages(pt, n, page+1);
+  }
+  return start;
 }
 
 void print_entry(page_table_entry * pt, unsigned int page) {

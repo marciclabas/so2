@@ -24,6 +24,10 @@ void free_frame(unsigned int frame);
 void set_user_pages(task_struct *task);
 void free_user_pages(task_struct *task);
 
+int alloc_frames(int n, int* frames);
+int alloc_pages(task_struct* task, int n, int start);
+int find_empty_pages(page_table_entry* pt, int num_pages, int start);
+
 
 extern Descriptor  *gdt;
 
