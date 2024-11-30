@@ -17,3 +17,20 @@ void test_screen() {
 		}
 	clrscr(screen);
 }
+
+void thread(void * arg) {
+  int id = (int) arg;
+  printf("Thread: %d\n", id);
+  exit();
+}
+
+void test_threads() {
+  for (int i = 0; i < 10; i++) {
+    int ok = threadCreateWithStack(thread, 1, (void*) i);
+    if (ok < 0)
+      printf("Error creating thread %d\n", i);
+    else
+      printf("Thread %d created\n", i);
+  }
+  exit();
+}
