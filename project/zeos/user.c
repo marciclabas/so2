@@ -11,5 +11,7 @@ int __attribute__ ((__section__(".text.main")))
 {
 	// test_screen();
   test_threads();
+  //test_exit();
+  printf("Tornem al main..........\n");
   while(1);
 }

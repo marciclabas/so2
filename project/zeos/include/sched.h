@@ -28,6 +28,13 @@ typedef struct task_struct {
   struct task_struct *parent;
   char key;
   int time_blocked;
+  
+  list_head threads_created;
+  list_head thread_anchor;
+  struct task_struct *thread_parent;
+  int thread_principal; // 1 si es el principal, 0 si ha estat creat per un altre
+  int start_page_thread;
+  int num_pages_thread;
 } task_struct;
 
 void print_pcb(task_struct *pcb);

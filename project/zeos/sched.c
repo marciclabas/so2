@@ -72,7 +72,9 @@ void init_pcb(task_struct * t) {
 	t->quantum = 0;
 	t->state = ST_RUN;
 	t->pending_unblocks = 0;
+	t->thread_principal = 1;
 	INIT_LIST_HEAD(&t->children);
+	INIT_LIST_HEAD(&t->threads_created);
 }
 
 void init_idle() {
@@ -89,7 +91,7 @@ void init_idle() {
 	task->stack[KERNEL_STACK_SIZE-2] = 0;
 	task->stack[KERNEL_STACK_SIZE-1] = (unsigned long) &cpu_idle;
 	task->task.kernel_esp = (unsigned int) &task->stack[KERNEL_STACK_SIZE-2];
-
+	
 	idle_task = &task->task;
 	init_pcb(idle_task);
 }
