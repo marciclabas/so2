@@ -152,28 +152,129 @@ int sys_fork() {
   child->parent = parent;
   list_add_tail(&child->child_anchor, &parent->children);
 
+  INIT_LIST_HEAD(&child->threads_created);
+  child->thread_principal = 1;
+
   list_add_tail(&child->list, &readyqueue);
   return child->PID;
 }
 
-void sys_exit() {
-  task_struct * curr = current();
-  update_process_state_rr(curr, &freequeue);
-  sched_next_rr();
-  list_del(&curr->child_anchor);
 
-  list_head* it;
-  list_for_each(it, &curr->children) {
-    task_struct * child = list_head_to_child(it);
-    list_add_tail(&idle_task->children, &child->child_anchor);
-  }
+void recursive_exit(task_struct *t){
+
+	if(list_empty(&t->threads_created)){
+		printf("eliminem thread: %d\n", t->TID);
+	  	sys_exit();
+	}
+	else{
+		list_head *it, *it2;
+		printf("WTF");
+		list_for_each_safe(it, it2, &t->threads_created) {
+		    task_struct * child = list_head_to_child(it);
+		    recursive_exit(&child);
+		}
+	}
+	  
+	  /*
+	  update_process_state_rr(curr, &freequeue);
+	  sched_next_rr();
+	  list_del(&curr->child_anchor);
+	  list_del(&curr->thread_anchor);
+
+	  list_head* it;
+	  task_struct * thread_parent = list_head_to_task_struct(&curr->thread_parent);
+	  
+	  list_for_each(it, &curr->children) {
+	    task_struct * child = list_head_to_child(it);
+	    list_add_tail(&child->child_anchor, &thread_parent->children);
+	  }
+	  
+	  list_for_each(it, &curr->threads_created) {
+	    task_struct * child = list_head_to_child(it);
+	    list_add_tail(&child->thread_anchor, &thread_parent->threads_created);
+	  }
+	  
+	  page_table_entry * pt = get_PT(curr);
+	  for (int i = 0; i < curr->num_pages_thread; i++) {
+	    int page = curr->start_page_thread + i;
+	    if (pt[page].bits.present) {
+	      free_frame(get_frame(pt, page));
+	      del_ss_pag(pt, page);
+	    }
+	  }*/
+	  
+}
+
+
+
+void sys_exit() {
+
+  task_struct * curr = current();
+  printf("TID_exit = %d\n", curr->TID);
+  list_head *head = list_pop(&curr->threads_created);
+  task_struct *t = list_head_to_task_struct(&head);
+  printf("TID_exit_rec = %d\n", t->TID);
+  printf("AAAAAAAA");
   
-  page_table_entry * pt = get_PT(curr);
-  for (int i = 0; i < TOTAL_PAGES; i++) {
-    if (pt[i].bits.present) {
-      free_frame(get_frame(pt, i));
-      del_ss_pag(pt, i);
-    }
+  if(curr->thread_principal == 1){
+  	  //eliminem recursivament els threads fills
+  	  if(!list_empty(&curr->threads_created)){
+	  	  list_head *it, *it2;
+		  list_for_each_safe(it, it2, &curr->threads_created) {
+		    task_struct* child = list_head_to_task_struct(it);
+		    	  printf("TID_exit_rec = %d\n", child->TID);
+		    recursive_exit(&child);
+		  }
+	  }
+	  else printf("AQUII");
+  	  
+	  update_process_state_rr(curr, &freequeue);
+	  sched_next_rr();
+	  list_del(&curr->child_anchor);
+	  list_del(&curr->thread_anchor);
+		
+	  list_head *it;
+	  list_for_each(it, &curr->children) {
+	    task_struct * child = list_head_to_child(it);
+	    list_add_tail(&child->child_anchor, &idle_task->children);
+	  }
+	  
+	  page_table_entry * pt = get_PT(curr);
+	  for (int i = 0; i < TOTAL_PAGES; i++) {
+	    if (pt[i].bits.present) {
+	      free_frame(get_frame(pt, i));
+	      del_ss_pag(pt, i);
+	    }
+	  }
+  }
+  else{ // si no es el principal nomes alliberem l'espai de memoria privat del thread
+	  printf("eliminem un thread\n");
+ 	  update_process_state_rr(curr, &freequeue);
+	  sched_next_rr();
+	  list_del(&curr->child_anchor);
+	  list_del(&curr->thread_anchor);
+
+	  list_head* it;
+	  task_struct* thread_parent = list_head_to_task_struct(&curr->thread_parent);
+	  
+	  list_for_each(it, &curr->children) {
+	    task_struct * child = list_head_to_child(it);
+	    list_add_tail(&child->child_anchor, &thread_parent->children);
+	  }
+	  
+	  list_for_each(it, &curr->threads_created) {
+	    task_struct * child = list_head_to_child(it);
+	    list_add_tail(&child->thread_anchor, &thread_parent->threads_created);
+	  }
+	  
+	  page_table_entry * pt = get_PT(curr);
+	  for (int i = 0; i < curr->num_pages_thread; i++) {
+	    int page = curr->start_page_thread + i;
+	    if (pt[page].bits.present) {
+	      free_frame(get_frame(pt, page));
+	      del_ss_pag(pt, page);
+	    }
+	  }
   }
 }
 
@@ -291,6 +392,23 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
   esp[14] = (unsigned long) function;
   // user esp: 1-th from bottom
   esp[17] = &user_stack[num_entries-2];
+  
+  
+  ///printf("1\n");
+  INIT_LIST_HEAD(&child->threads_created);
+  //printf("2\n");
+  child->thread_principal = 0;
+  //printf("3\n");
+  list_add_tail(&child->thread_anchor, &parent->threads_created);
+  //printf("4\n");
+  child->thread_parent = parent;
+  child->start_page_thread = start_page;
+  child->num_pages_thread = N;
+  //printf("5\n");
+  
+  printf("TID = %d\n", parent->TID);
+    printf("TID fill = %d\n", child->TID);
+  
   
   list_add_tail(&child->list, &readyqueue);
 

@@ -104,3 +104,4 @@ WRAPPER2(gotoXY, 17)
 WRAPPER2(changeColor,18)
 WRAPPER1(clrscr,19)
 WRAPPER0(getpid, 20)
+
