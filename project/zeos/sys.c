@@ -76,6 +76,10 @@ int sys_getpid() {
 	return current()->PID;
 }
 
+int sys_gettid(){
+	return current()->TID;
+}
+
 void copy_pt_entry(
   task_struct * from, int idx_from,
   task_struct * to, int idx_to
@@ -160,85 +164,68 @@ int sys_fork() {
 }
 
 
-void recursive_exit(task_struct *t){
 
-	if(list_empty(&t->threads_created)){
-		printf("eliminem thread: %d\n", t->TID);
-	  	sys_exit();
-	}
-	else{
-		list_head *it, *it2;
-		printf("WTF");
-		list_for_each_safe(it, it2, &t->threads_created) {
-		    task_struct * child = list_head_to_child(it);
-		    recursive_exit(&child);
-		}
-	}
-	  
-	  /*
-	  update_process_state_rr(curr, &freequeue);
-	  sched_next_rr();
-	  list_del(&curr->child_anchor);
-	  list_del(&curr->thread_anchor);
 
-	  list_head* it;
-	  task_struct * thread_parent = list_head_to_task_struct(&curr->thread_parent);
-	  
-	  list_for_each(it, &curr->children) {
-	    task_struct * child = list_head_to_child(it);
-	    list_add_tail(&child->child_anchor, &thread_parent->children);
-	  }
-	  
-	  list_for_each(it, &curr->threads_created) {
-	    task_struct * child = list_head_to_child(it);
-	    list_add_tail(&child->thread_anchor, &thread_parent->threads_created);
-	  }
-	  
-	  page_table_entry * pt = get_PT(curr);
-	  for (int i = 0; i < curr->num_pages_thread; i++) {
-	    int page = curr->start_page_thread + i;
-	    if (pt[page].bits.present) {
-	      free_frame(get_frame(pt, page));
-	      del_ss_pag(pt, page);
-	    }
-	  }*/
-	  
+void inner_exit(task_struct* curr){
+  printf("TID exiting = %d\n", curr->TID);
+  
+  list_del(&curr->list);
+  list_del(&curr->thread_anchor); //no cal comprovar que no es principal pq inner nomes el criden els threads pares...
+  update_process_state_rr(curr, &freequeue);
+  
+  //eliminem recursivament els threads fills 
+  if(!list_empty(&curr->threads_created)){
+	list_head *it, *it2;
+	list_for_each_safe(it, it2, &curr->threads_created) {
+	task_struct* child = list_head_to_thread(it);
+	inner_exit(child); 
+  	}
+  }
+  
+  //Posem que els fills son fills de IDLE -------------------------> Potser hem de fer que siguin fills del thread pare a no ser que aquest sigui el principal...		
+  list_head *it;
+  list_for_each(it, &curr->children) {
+    printf("0\n");
+    task_struct * child = list_head_to_child(it);
+    list_add_tail(&child->child_anchor, &idle_task->children);
+  }
+  
+  page_table_entry * pt = get_PT(curr); //borrem el tros privat de la TP
+  for (int i = 0; i < curr->num_pages_thread; i++) {
+    int page = curr->start_page_thread + i;
+    if (pt[page].bits.present) {
+      free_frame(get_frame(pt, page));
+      del_ss_pag(pt, page);
+    }
+  }
+  printf("Acabem exit de %d\n",curr->TID);
 }
 
-
-
-void sys_exit() {
-
+void sys_exit() { //unica diferencia amb inner exit es q aqueest fa shednext abans de borrar la seva memoria i fa comprobacions per si es el thread principal
   task_struct * curr = current();
-  printf("TID_exit = %d\n", curr->TID);
-  list_head *head = list_pop(&curr->threads_created);
-  task_struct *t = list_head_to_task_struct(&head);
-  printf("TID_exit_rec = %d\n", t->TID);
-  printf("AAAAAAAA");
+  if(curr->thread_principal == 0) list_del(&curr->thread_anchor);//si no es el principal segur que te thread pare
+  else list_del(&curr->child_anchor);
   
-  if(curr->thread_principal == 1){
-  	  //eliminem recursivament els threads fills
-  	  if(!list_empty(&curr->threads_created)){
-	  	  list_head *it, *it2;
-		  list_for_each_safe(it, it2, &curr->threads_created) {
-		    task_struct* child = list_head_to_task_struct(it);
-		    	  printf("TID_exit_rec = %d\n", child->TID);
-		    recursive_exit(&child);
-		  }
-	  }
-	  else printf("AQUII");
-  	  
-	  update_process_state_rr(curr, &freequeue);
-	  sched_next_rr();
-	  list_del(&curr->child_anchor);
-	  list_del(&curr->thread_anchor);
-		
-	  list_head *it;
+  //eliminem recursivament els threads fills
+  update_process_state_rr(curr, &freequeue);
+  printf("TID exiting = %d\n", curr->TID);
+  if(!list_empty(&curr->threads_created)){
+	list_head *it, *it2;
+	list_for_each_safe(it, it2, &curr->threads_created) {
+	task_struct* child = list_head_to_thread(it);
+	inner_exit(child); 
+  	}
+  }
+  
+  //Posem que els fills son fills de IDLE -------------------------> Potser hem de fer que siguin fills del thread pare a no ser que aquest sigui el principal...		
+  if(!list_empty(&curr->children)){
+  	  list_head *it;
 	  list_for_each(it, &curr->children) {
 	    task_struct * child = list_head_to_child(it);
 	    list_add_tail(&child->child_anchor, &idle_task->children);
 	  }
-	  
+  }
+  if(curr->thread_principal == 1){ //borra tota la PT  
 	  page_table_entry * pt = get_PT(curr);
 	  for (int i = 0; i < TOTAL_PAGES; i++) {
 	    if (pt[i].bits.present) {
@@ -248,25 +235,6 @@ void sys_exit() {
 	  }
   }
   else{ // si no es el principal nomes alliberem l'espai de memoria privat del thread
-	  printf("eliminem un thread\n");
- 	  update_process_state_rr(curr, &freequeue);
-	  sched_next_rr();
-	  list_del(&curr->child_anchor);
-	  list_del(&curr->thread_anchor);
-
-	  list_head* it;
-	  task_struct* thread_parent = list_head_to_task_struct(&curr->thread_parent);
-	  
-	  list_for_each(it, &curr->children) {
-	    task_struct * child = list_head_to_child(it);
-	    list_add_tail(&child->child_anchor, &thread_parent->children);
-	  }
-	  
-	  list_for_each(it, &curr->threads_created) {
-	    task_struct * child = list_head_to_child(it);
-	    list_add_tail(&child->thread_anchor, &thread_parent->threads_created);
-	  }
-	  
 	  page_table_entry * pt = get_PT(curr);
 	  for (int i = 0; i < curr->num_pages_thread; i++) {
 	    int page = curr->start_page_thread + i;
@@ -276,6 +244,9 @@ void sys_exit() {
 	    }
 	  }
   }
+  printf("Acabem exit de %d\n",curr->TID);
+  sched_next_rr();
+  
 }
 
 int sys_gettime() {
@@ -396,20 +367,36 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
   
   ///printf("1\n");
   INIT_LIST_HEAD(&child->threads_created);
+  INIT_LIST_HEAD(&child->children);
+
   //printf("2\n");
   child->thread_principal = 0;
   //printf("3\n");
-  list_add_tail(&child->thread_anchor, &parent->threads_created);
+
   //printf("4\n");
   child->thread_parent = parent;
   child->start_page_thread = start_page;
   child->num_pages_thread = N;
   //printf("5\n");
+  list_add_tail(&child->thread_anchor, &parent->threads_created);
+  /*printf("Comprovacions creació de la llista correctament:\n");
+  printf("TID pare = %d\n", parent->TID);
+  printf("TID fill = %d\n", child->TID);
+  printf("TID thread_parent del fill = %d\n", child->thread_parent->TID);
+  printf("Mida llista threads_created pare = %d\n", list_len(&parent->threads_created));
+  printf("Mida llista threads_created fill = %d\n", list_len(&child->threads_created));
   
-  printf("TID = %d\n", parent->TID);
-    printf("TID fill = %d\n", child->TID);
+  list_head *h = list_pop(&parent->threads_created);
+  task_struct *t = list_head_to_thread(h);
+  printf("Thread_anchor = %d\n", &child->thread_anchor);
+  printf("list = %d\n", &child->list);
+  printf("&Child = %d\n", &child);
+  printf("Direcció h = %d\n", t);  
   
+  printf("Mida llista threads_created pare despres = %d\n", list_len(&parent->threads_created));
   
+  printf("TID fill tret de la llista = %d\n", t->TID);
+  */
   list_add_tail(&child->list, &readyqueue);
 
   return child->TID;

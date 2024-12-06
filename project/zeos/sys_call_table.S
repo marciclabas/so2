@@ -15,7 +15,7 @@ ENTRY(sys_call_table)
 	.long sys_gettime // 10
 	.long sys_ni_syscall // 11
 	.long sys_ni_syscall // 12
-	.long sys_ni_syscall // 13
+	.long sys_gettid // 13
 	.long sys_getkey // 14
 	.long sys_ni_syscall // 15
 	.long sys_threadCreateWithStack // 16

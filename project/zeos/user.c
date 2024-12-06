@@ -10,8 +10,8 @@ int __attribute__ ((__section__(".text.main")))
   main(void)
 {
 	// test_screen();
-  test_threads();
-  //test_exit();
+  //test_threads();
+  test_threads_exit();
   printf("Tornem al main..........\n");
   while(1);
 }

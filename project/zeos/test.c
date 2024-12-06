@@ -19,18 +19,46 @@ void test_screen() {
 }
 
 void thread(void * arg) {
-  int id = (int) arg;
-  printf("Thread: %d\n", id);
+  int id = gettid();
+  printf("..Thread: %d\n", id);
+  sleep(1000);
   exit();
 }
 
-void test_threads() {
-  for (int i = 0; i < 10; i++) {
-    int ok = threadCreateWithStack(thread, 1, (void*) i);
+void test_threads(void * arg) {
+  for (int i = 0; i < 2; i++) {
+  int id = 2 + (int) arg;
+    int ok = threadCreateWithStack(thread, 1, (void*) id);
     if (ok < 0)
       printf("Error creating thread %d\n", i);
     else
-      printf("Thread %d created\n", i);
+      printf(".Thread %d created\n", i);
   }
+  sleep(2000);
+  printf("em desperto 2\n");
+  exit();
+}
+
+void test_threads_exit() {
+  for (int i = 0; i < 3; i++) {
+    int ok = threadCreateWithStack(test_threads, 1, (void*) i);
+    if (ok < 0)
+      printf("Error creating thread exit %d\n", i);
+    else
+      printf("Thread exit %d created\n", i);
+  }
+  sleep(4000);
+  printf("em desperto\n");
+  
+  for (int i = 0; i < 3; i++) {
+    int ok = threadCreateWithStack(test_threads, 1, (void*) i);
+    if (ok < 0)
+      printf("Error creating thread exit %d\n", i);
+    else
+      printf("Thread exit %d created\n", i);
+  }
+  //sleep(4000);
+  printf("em desperto\n");
+  
   exit();
 }
