@@ -15,6 +15,11 @@
 #define LECTURA 0
 #define ESCRIPTURA 1
 
+/*int* sys_semCreate(int initial_value){
+	int* s = INIT_SEM(initial_value);
+	return s;
+}*/
+
 list_head key_blocked;
 
 int key_unblock(char c) {
@@ -167,8 +172,6 @@ int sys_fork() {
 
 
 void inner_exit(task_struct* curr){
-  printf("TID exiting = %d\n", curr->TID);
-  
   list_del(&curr->list);
   list_del(&curr->thread_anchor); //no cal comprovar que no es principal pq inner nomes el criden els threads pares...
   update_process_state_rr(curr, &freequeue);
@@ -185,12 +188,12 @@ void inner_exit(task_struct* curr){
   //Posem que els fills son fills de IDLE -------------------------> Potser hem de fer que siguin fills del thread pare a no ser que aquest sigui el principal...		
   list_head *it;
   list_for_each(it, &curr->children) {
-    printf("0\n");
     task_struct * child = list_head_to_child(it);
     list_add_tail(&child->child_anchor, &idle_task->children);
   }
   
-  page_table_entry * pt = get_PT(curr); //borrem el tros privat de la TP
+  //borrem el tros privat de la TP
+  page_table_entry * pt = get_PT(curr); 
   for (int i = 0; i < curr->num_pages_thread; i++) {
     int page = curr->start_page_thread + i;
     if (pt[page].bits.present) {
@@ -198,7 +201,6 @@ void inner_exit(task_struct* curr){
       del_ss_pag(pt, page);
     }
   }
-  printf("Acabem exit de %d\n",curr->TID);
 }
 
 void sys_exit() { //unica diferencia amb inner exit es q aqueest fa shednext abans de borrar la seva memoria i fa comprobacions per si es el thread principal
@@ -208,7 +210,6 @@ void sys_exit() { //unica diferencia amb inner exit es q aqueest fa shednext aba
   
   //eliminem recursivament els threads fills
   update_process_state_rr(curr, &freequeue);
-  printf("TID exiting = %d\n", curr->TID);
   if(!list_empty(&curr->threads_created)){
 	list_head *it, *it2;
 	list_for_each_safe(it, it2, &curr->threads_created) {
@@ -244,9 +245,7 @@ void sys_exit() { //unica diferencia amb inner exit es q aqueest fa shednext aba
 	    }
 	  }
   }
-  printf("Acabem exit de %d\n",curr->TID);
   sched_next_rr();
-  
 }
 
 int sys_gettime() {
@@ -365,38 +364,21 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
   esp[17] = &user_stack[num_entries-2];
   
   
-  ///printf("1\n");
+
   INIT_LIST_HEAD(&child->threads_created);
   INIT_LIST_HEAD(&child->children);
 
-  //printf("2\n");
-  child->thread_principal = 0;
-  //printf("3\n");
 
-  //printf("4\n");
+  child->thread_principal = 0;
+
+
+
   child->thread_parent = parent;
   child->start_page_thread = start_page;
   child->num_pages_thread = N;
-  //printf("5\n");
+
   list_add_tail(&child->thread_anchor, &parent->threads_created);
-  /*printf("Comprovacions creació de la llista correctament:\n");
-  printf("TID pare = %d\n", parent->TID);
-  printf("TID fill = %d\n", child->TID);
-  printf("TID thread_parent del fill = %d\n", child->thread_parent->TID);
-  printf("Mida llista threads_created pare = %d\n", list_len(&parent->threads_created));
-  printf("Mida llista threads_created fill = %d\n", list_len(&child->threads_created));
   
-  list_head *h = list_pop(&parent->threads_created);
-  task_struct *t = list_head_to_thread(h);
-  printf("Thread_anchor = %d\n", &child->thread_anchor);
-  printf("list = %d\n", &child->list);
-  printf("&Child = %d\n", &child);
-  printf("Direcció h = %d\n", t);  
-  
-  printf("Mida llista threads_created pare despres = %d\n", list_len(&parent->threads_created));
-  
-  printf("TID fill tret de la llista = %d\n", t->TID);
-  */
   list_add_tail(&child->list, &readyqueue);
 
   return child->TID;

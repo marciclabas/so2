@@ -171,7 +171,6 @@ void update_process_state_rr(task_struct *t, struct list_head *dst) {
 
 void sched_next_rr() {
 	if (list_empty(&readyqueue)) {
-		printf("Estamos bien\n");
 		task_switch((task_union*) idle_task);
 	}
 	else {

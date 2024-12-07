@@ -9,11 +9,11 @@ ENTRY(sys_call_table)
 	.long sys_write // 4
 	.long sys_block // 5
 	.long sys_unblock // 6
-	.long sys_ni_syscall // 7
-	.long sys_ni_syscall // 8
-	.long sys_ni_syscall // 9
+	.long sys_semCreate // 7
+	.long sys_semWait // 8
+	.long sys_semSignal // 9
 	.long sys_gettime // 10
-	.long sys_ni_syscall // 11
+	.long sys_semDestroy // 11
 	.long sys_ni_syscall // 12
 	.long sys_gettid // 13
 	.long sys_getkey // 14

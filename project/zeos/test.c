@@ -1,5 +1,8 @@
 #include <libc.h>
 
+sem_t* s;
+sem_t* s2;
+
 void test_fork() {
   int pid = fork();
   if (pid == 0) {
@@ -61,4 +64,43 @@ void test_threads_exit() {
   printf("em desperto\n");
   
   exit();
+}
+
+void sem1(void* arg){
+  printf("...thread2 intento entrar a la zona bloquejada\n");
+  semWait(s);
+  printf("...thread2 per fi he entrat...\n");
+  sleep(1000);
+  semSignal(s);
+  printf("...thread2 surto de la zona protegida\n");
+  printf("...thread2 intento borrar el sem pero no podre...\n");
+  semDestroy(s);
+  printf("...thread2 desbloquejo al primer thread del sem de sincronització\n");
+  semSignal(s2);
+  sleep(1000);
+  printf("...thread2 exit!");
+  exit();
+}
+
+
+  
+void test_sem(){
+
+  s = semCreate(1);
+  printf("Comença el test!!!!!!\n");
+  s2 = semCreate(0);
+  printf("semàfor creat!\n");
+  threadCreateWithStack(sem1, 1, (void*) 1);
+  semWait(s);
+  printf("thread1 entro a la zona protegida i sleep...\n");
+  sleep(1000);
+  printf("thread1 ja he dormit prou\n");
+  semSignal(s);
+  printf("thread1 ara intento passar el semafor de sincronització\n");
+  semWait(s2);
+  printf("thread1 ja he passat el semafor de sincronització\n");
+  printf("thread1 elimino els semafors\n");
+  semDestroy(s);
+  semDestroy(s2);
+  printf("thread1 he acabat\n");
 }
