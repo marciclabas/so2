@@ -39,6 +39,8 @@ int gotoXY(int px,int py);
 
 int threadCreateWithStack( void (*function)(void* arg), int N, void* parameter);
 
+char* memRegGet(int num_pages);
+int memRegDel(char* m);
 sem_t* semCreate(int init_value);
 int semWait(sem_t* s);
 int semSignal(sem_t* s);
