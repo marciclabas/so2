@@ -33,6 +33,10 @@ task_struct *list_head_to_child(list_head *l) {
 	return list_entry(l, task_struct, child_anchor);
 }
 
+task_struct *list_head_to_thread(list_head *l) {
+	return list_entry(l, task_struct, thread_anchor);
+}
+
 extern list_head blocked;
 
 
@@ -101,6 +105,7 @@ void init_task1() {
 	task_union * task = (task_union*) list_head_to_task_struct(head);
 
 	init_pcb(&task->task);
+	list_add_tail(&task->task.child_anchor, &idle_task->children);
 	
 	set_quantum(&task->task, 100);
 	task->task.PID = 1;
