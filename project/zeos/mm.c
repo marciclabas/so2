@@ -333,3 +333,41 @@ void print_user_pages(task_struct * task) {
     printf("====================================\n");
   }
 }
+
+#define TEMPORAL_START ((PAG_LOG_INIT_CODE+NUM_PAG_CODE)*PAGE_SIZE)
+#define STACKS_START (TEMPORAL_START + NUM_PAG_DATA*PAGE_SIZE)
+
+/** Allocates `num_pages`:
+ * - Stores `num_pages` at the start of the block
+ * - Returns the address of the first page + 4 (after the size)
+ */
+char* sys_memRegGet(int num_pages) {
+  task_struct * curr = current();
+  
+  int start_page = find_empty_pages(get_PT(curr), num_pages, STACKS_START >> 12);
+  if (start_page < -1)
+    return NULL;
+
+  if (alloc_pages(curr, num_pages, start_page) < 0)
+    return NULL;
+
+  char * start = (char*) (start_page << 12);
+  ((int*)start)[0] = num_pages;
+  return start + sizeof(int);
+}
+
+
+int sys_memRegDel(char* m) {
+
+  task_struct * curr = current();
+
+  int start_page = ((int)m) >> 12;
+  int num_pages = ((int*)m)[-1];
+  
+  for (int i = 0; i < num_pages; i++) {
+    del_ss_pag(get_PT(curr), start_page + i);
+  }
+
+  // set_cr3(get_DIR(curr)); // maybe? or just "undefined behavior"
+  return 0;
+}
