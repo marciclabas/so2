@@ -8,6 +8,9 @@
 
 #include <stats.h>
 
+
+typedef sem_t;
+
 int write(int fd, const char *buffer, int size);
 int getkey(char* c, int timeout);
 
@@ -17,6 +20,7 @@ void int2base(int a, char *b, int base);
 int strlen(const char *a);
 
 int getpid();
+int gettid();
 
 int fork();
 
@@ -37,5 +41,9 @@ int threadCreateWithStack( void (*function)(void* arg), int N, void* parameter);
 
 char* memRegGet(int num_pages);
 int memRegDel(char* m);
+sem_t* semCreate(int init_value);
+int semWait(sem_t* s);
+int semSignal(sem_t* s);
+int semDestroy(sem_t* s);
 
 #endif  /* __LIBC_H__ */
