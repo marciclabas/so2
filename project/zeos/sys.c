@@ -15,11 +15,6 @@
 #define LECTURA 0
 #define ESCRIPTURA 1
 
-/*int* sys_semCreate(int initial_value){
-	int* s = INIT_SEM(initial_value);
-	return s;
-}*/
-
 list_head key_blocked;
 
 int key_unblock(char c) {
@@ -100,8 +95,53 @@ int ret_from_fork() {
   return 0;
 }
 
-#define TEMPORAL_START ((PAG_LOG_INIT_CODE+NUM_PAG_CODE)*PAGE_SIZE)
-#define STACKS_START (TEMPORAL_START + NUM_PAG_DATA*PAGE_SIZE)
+/** Copy user data pages from `parent` to `child`
+ * 1. Copy `child` data entries to `parent` temporal entries
+ * 2. Copy data
+ * 3. Remove temporal entries
+*/
+void copy_user_data(task_struct* parent, task_struct* child) {
+  for (int i = 0; i < NUM_PAG_DATA; i++)
+    copy_pt_entry(
+      child, PAG_LOG_INIT_DATA + i,
+      parent, PAG_LOG_INIT_COPY + i
+    );
+
+  copy_data(L_USER_START, COPY_START, NUM_PAG_DATA*PAGE_SIZE);
+
+  for (int i = 0; i < NUM_PAG_DATA; i++)
+    del_ss_pag(get_PT(parent), PAG_LOG_INIT_COPY + i);
+}
+
+/** Copy heap from `t1` to `t2`
+ * 1. For each heap page in `t1`, allocate a new frame in `t2`. Map it to a temporal entry in `t1`
+ * 2. Copy data
+ * 3. Remove temporal entries
+*/
+int copy_heap(task_struct* t1, task_struct* t2) {
+  page_table_entry* pt1 = get_PT(t1);
+  page_table_entry* pt2 = get_PT(t2);
+
+  for (int i = 0; i < NUM_PAG_HEAP; i++) {
+    int page = PAG_LOG_INIT_HEAP + i;
+    
+    if (pt1[page].bits.present) {
+      int frame = alloc_frame();
+      if (frame < 0)
+        return -1;
+
+      set_ss_pag(pt2, page, frame);
+      int temp_page = PAG_LOG_INIT_TEMP + i;
+      set_ss_pag(pt1, temp_page, frame);
+
+      copy_data(page << 12, temp_page << 12, PAGE_SIZE);
+
+      del_ss_pag(pt1, temp_page);
+    }
+  }
+  return 0;
+}
+
 
 int sys_fork() {
 
@@ -129,20 +169,15 @@ int sys_fork() {
   for (int page = PAG_LOG_INIT_CODE; page < PAG_LOG_INIT_CODE + NUM_PAG_CODE; page++)
     copy_pt_entry(parent, page, child, page);
 
-  // append child data pages to parent
-  for (int i = 0; i < NUM_PAG_DATA; i++)
-    copy_pt_entry(
-      child, PAG_LOG_INIT_DATA + i,
-      parent, PAG_LOG_INIT_CODE + NUM_PAG_CODE + i // after user code pages
-    );
+  // copy user data pages
+  copy_user_data(parent, child);
 
-  // copy user data pages to temporal entries
-  
-  copy_data(L_USER_START, TEMPORAL_START, NUM_PAG_DATA*PAGE_SIZE);
-
-  // remove temporal entries from parent
-  for (int i = 0; i < NUM_PAG_DATA; i++)
-    del_ss_pag(get_PT(parent), PAG_LOG_INIT_CODE + NUM_PAG_CODE + i);
+  // copy heap
+  if (copy_heap(parent, child) < 0) {
+    list_add_tail(head, &freequeue); // give back the PCB
+    free_user_pages(child);
+    return -1;
+  }
 
   // flush TLB
   set_cr3(get_DIR(parent));
@@ -170,8 +205,6 @@ int sys_fork() {
   list_add_tail(&child->list, &readyqueue);
   return child->PID;
 }
-
-
 
 
 void inner_exit(task_struct* curr){
@@ -215,11 +248,11 @@ void sys_exit() { //unica diferencia amb inner exit es q aqueest fa shednext aba
   task_struct * curr = current();
   update_process_state_rr(curr, &freequeue);
 
-  if(curr->thread_principal == 0){
-    list_del(&curr->thread_anchor);//si no es el principal segur que te thread pare
-    if(!list_empty(&curr->threads_created)){
-      list_head *it, *it2;
-      task_struct* pare = curr->parent;
+    if(curr->thread_principal == 0){
+      list_del(&curr->thread_anchor);//si no es el principal segur que te thread pare
+      if(!list_empty(&curr->threads_created)){
+        list_head *it, *it2;
+        task_struct* pare = curr->parent;
       list_for_each_safe(it, it2, &curr->threads_created) { //posem tots els threads fills que siguin threads del pare d'aquest
       //task_struct* child = list_head_to_thread(it);
       list_add(it, &pare->threads_created);
@@ -281,50 +314,6 @@ void sys_exit() { //unica diferencia amb inner exit es q aqueest fa shednext aba
   }
   sched_next_rr();
 }
-/*void sys_exit() { //unica diferencia amb inner exit es q aqueest fa shednext abans de borrar la seva memoria i fa comprobacions per si es el thread principal
-  task_struct * curr = current();
-  if(curr->thread_principal == 0) list_del(&curr->thread_anchor);//si no es el principal segur que te thread pare
-  else list_del(&curr->child_anchor);
-  
-  //eliminem recursivament els threads fills
-  update_process_state_rr(curr, &freequeue);
-  if(!list_empty(&curr->threads_created)){
-	list_head *it, *it2;
-	list_for_each_safe(it, it2, &curr->threads_created) {
-	task_struct* child = list_head_to_thread(it);
-	inner_exit(child); 
-  	}
-  }
-  
-  //Posem que els fills son fills de IDLE -------------------------> Potser hem de fer que siguin fills del thread pare a no ser que aquest sigui el principal...		
-  if(!list_empty(&curr->children)){
-  	  list_head *it;
-	  list_for_each(it, &curr->children) {
-	    task_struct * child = list_head_to_child(it);
-	    list_add_tail(&child->child_anchor, &idle_task->children);
-	  }
-  }
-  if(curr->thread_principal == 1){ //borra tota la PT  
-	  page_table_entry * pt = get_PT(curr);
-	  for (int i = 0; i < TOTAL_PAGES; i++) {
-	    if (pt[i].bits.present) {
-	      free_frame(get_frame(pt, i));
-	      del_ss_pag(pt, i);
-	    }
-	  }
-  }
-  else{ // si no es el principal nomes alliberem l'espai de memoria privat del thread
-	  page_table_entry * pt = get_PT(curr);
-	  for (int i = 0; i < curr->num_pages_thread; i++) {
-	    int page = curr->start_page_thread + i;
-	    if (pt[page].bits.present) {
-	      free_frame(get_frame(pt, page));
-	      del_ss_pag(pt, page);
-	    }
-	  }
-  }
-  sched_next_rr();
-}*/
 
 int sys_gettime() {
   return zeos_ticks;
@@ -405,8 +394,7 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
 
   copy_data(parent, child, sizeof(task_union));
 
-  int stacks_start = STACKS_START;
-  int start_page = find_empty_pages(get_PT(child), N, stacks_start >> 12);
+  int start_page = find_empty_pages(get_PT(child), N, PAG_LOG_INIT_HEAP);
   if (start_page == -1) {
     printf("Error creating thread: no pages available\n");
     list_add_tail(&child->list, &freequeue);
