@@ -45,6 +45,7 @@ USROBJ = \
 	wrappers.o \
 	utils.o \
 	test.o \
+	dibuixos.o \
 	# libjp.a \
 
 all:zeos.bin dump

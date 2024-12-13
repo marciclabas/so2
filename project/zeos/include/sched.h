@@ -35,6 +35,9 @@ typedef struct task_struct {
   int thread_principal; // 1 si es el principal, 0 si ha estat creat per un altre
   int start_page_thread;
   int num_pages_thread;
+
+  list_head sems_created;
+  int sem_destroyed;
 } task_struct;
 
 void print_pcb(task_struct *pcb);

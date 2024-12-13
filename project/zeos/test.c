@@ -1,4 +1,5 @@
 #include <libc.h>
+#include <dibuixos.h>
 
 sem_t* s;
 sem_t* s2;
@@ -13,12 +14,12 @@ void test_fork() {
 }
 
 void test_screen() {
-	short screen[80][25];
+	/*short screen[80][25];
 	for (int i = 0; i < 80; i++)
 		for (int j = 0; j < 25; j++) {
 			screen[i][j] = '0' + (2 << 8);
-		}
-	clrscr(screen);
+		}*/
+	clrscr(mapa);
 }
 
 void thread(void * arg) {

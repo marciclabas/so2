@@ -28,13 +28,13 @@ void test_dyn_mem() {
 int __attribute__ ((__section__(".text.main")))
   main(void)
 {
-	// test_screen();
+	test_screen();
   // test_threads();
-  test_dyn_mem();
+  //test_dyn_mem();
   //test_exit();
   //test_threads();
   //test_threads_exit();
-  test_sem();
-  printf("Tornem al main..........\n");
+  //test_sem();
+  //printf("Tornem al main..........\n");
   while(1);
 }

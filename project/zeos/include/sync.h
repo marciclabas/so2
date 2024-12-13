@@ -9,10 +9,12 @@
 
 typedef struct sem_t{
 	list_head list;
+	list_head sem_anchor;
 	int TID_owner;
 	int count;
  	list_head blocked;
- 	int id; // no es quedara aixi pero de moment
+ 	int id;
+	int active;
 } sem_t;
 
 

@@ -164,6 +164,9 @@ int sys_fork() {
   INIT_LIST_HEAD(&child->threads_created);
   child->thread_principal = 1;
 
+  INIT_LIST_HEAD(&child->sems_created);
+
+
   list_add_tail(&child->list, &readyqueue);
   return child->PID;
 }
@@ -201,9 +204,84 @@ void inner_exit(task_struct* curr){
       del_ss_pag(pt, page);
     }
   }
+  //eliminem tots els sems
+  while(!list_empty(&curr->sems_created)){
+    list_head* h = list_pop(&curr->sems_created);
+    sem_destroy(h);
+  }
 }
 
 void sys_exit() { //unica diferencia amb inner exit es q aqueest fa shednext abans de borrar la seva memoria i fa comprobacions per si es el thread principal
+  task_struct * curr = current();
+  update_process_state_rr(curr, &freequeue);
+
+  if(curr->thread_principal == 0){
+    list_del(&curr->thread_anchor);//si no es el principal segur que te thread pare
+    if(!list_empty(&curr->threads_created)){
+      list_head *it, *it2;
+      task_struct* pare = curr->parent;
+      list_for_each_safe(it, it2, &curr->threads_created) { //posem tots els threads fills que siguin threads del pare d'aquest
+      //task_struct* child = list_head_to_thread(it);
+      list_add(it, &pare->threads_created);
+      }
+    }
+
+    //Posem que els fills son fills de IDLE 		
+    if(!list_empty(&curr->children)){
+        list_head *it;
+        list_for_each(it, &curr->children) {
+          task_struct * child = list_head_to_child(it);
+          list_add_tail(&child->child_anchor, &idle_task->children);
+        }
+      }
+    
+    //eliminem espai privat TP 
+    page_table_entry * pt = get_PT(curr);
+    for (int i = 0; i < curr->num_pages_thread; i++) {
+      int page = curr->start_page_thread + i;
+      if (pt[page].bits.present) {
+        free_frame(get_frame(pt, page));
+        del_ss_pag(pt, page);
+      }
+    }
+  }
+  else { //si es el principal
+    list_del(&curr->child_anchor);
+    //eliminem recursivament els threads fills
+    if(!list_empty(&curr->threads_created)){
+    list_head *it, *it2;
+    list_for_each_safe(it, it2, &curr->threads_created) {
+    task_struct* child = list_head_to_thread(it);
+      inner_exit(child); 
+    }
+    }
+
+    //Posem que els fills son fills de IDLE 		
+    if(!list_empty(&curr->children)){
+        list_head *it;
+      list_for_each(it, &curr->children) {
+        task_struct * child = list_head_to_child(it);
+        list_add_tail(&child->child_anchor, &idle_task->children);
+      }
+    }
+
+    //Borra tota la TP
+    page_table_entry * pt = get_PT(curr);
+	  for (int i = 0; i < TOTAL_PAGES; i++) {
+	    if (pt[i].bits.present) {
+	      free_frame(get_frame(pt, i));
+	      del_ss_pag(pt, i);
+	    }
+	  }
+  }
+  //eliminem els sems
+  while(!list_empty(&curr->sems_created)){
+    list_head* h = list_pop(&curr->sems_created);
+    sem_destroy(h);
+  }
+  sched_next_rr();
+}
+/*void sys_exit() { //unica diferencia amb inner exit es q aqueest fa shednext abans de borrar la seva memoria i fa comprobacions per si es el thread principal
   task_struct * curr = current();
   if(curr->thread_principal == 0) list_del(&curr->thread_anchor);//si no es el principal segur que te thread pare
   else list_del(&curr->child_anchor);
@@ -246,7 +324,7 @@ void sys_exit() { //unica diferencia amb inner exit es q aqueest fa shednext aba
 	  }
   }
   sched_next_rr();
-}
+}*/
 
 int sys_gettime() {
   return zeos_ticks;
@@ -367,6 +445,8 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
 
   INIT_LIST_HEAD(&child->threads_created);
   INIT_LIST_HEAD(&child->children);
+  INIT_LIST_HEAD(&child->sems_created);
+
 
 
   child->thread_principal = 0;
