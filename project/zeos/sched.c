@@ -79,6 +79,7 @@ void init_pcb(task_struct * t) {
 	t->thread_principal = 1;
 	INIT_LIST_HEAD(&t->children);
 	INIT_LIST_HEAD(&t->threads_created);
+	INIT_LIST_HEAD(&t->sems_created);
 }
 
 void init_idle() {
