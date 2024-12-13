@@ -44,7 +44,4 @@ void set_ss_pag(page_table_entry *PT, unsigned page,unsigned frame);
 void del_ss_pag(page_table_entry *PT, unsigned page);
 unsigned int get_frame(page_table_entry *PT, unsigned int page);
 
-void print_entry(page_table_entry * pt, unsigned int page);
-void print_user_pages(struct task_struct * task);
-
 #endif  /* __MM_H__ */

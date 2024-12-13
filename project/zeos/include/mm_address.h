@@ -12,6 +12,40 @@
 #define NUM_PAG_DATA 20
 #define PAGE_SIZE 0x1000
 
+#define PAG_LOG_INIT_COPY (PAG_LOG_INIT_CODE+NUM_PAG_CODE)
+#define NUM_PAG_COPY 20
+#define COPY_START (PAG_LOG_INIT_COPY << 12)
+
+#define PAG_LOG_INIT_TEMP (PAG_LOG_INIT_COPY+NUM_PAG_COPY)
+#define NUM_PAG_TEMP (TOTAL_PAGES)
+#define TEMP_START (PAG_LOG_INIT_TEMP << 12)
+
+#define PAG_LOG_INIT_HEAP (PAG_LOG_INIT_TEMP+NUM_PAG_TEMP)
+#define NUM_PAG_HEAP (TOTAL_PAGES)
+#define HEAP_START (PAG_LOG_INIT_HEAP << 12)
+
+/*
+  ADDRESS SPACE LAYOUT
+
+  |--------------------------|
+  | KERNEL (NUM_PAG_KERNEL)  |
+  |--------------------------| <-- PAG_LOG_INIT_DATA
+  | DATA (NUM_PAG_DATA)      | 
+  |--------------------------| <-- PAG_LOG_INIT_CODE
+  | CODE (NUM_PAG_CODE)      |
+  |--------------------------| <-- PAG_LOG_INIT_COPY
+  | COPY (NUM_PAG_DATA)      |
+  |--------------------------| <-- PAG_LOG_INIT_TEMP
+  | TEMP (TOTAL_PAGES)       |
+  |--------------------------| <-- PAG_LOG_INIT_HEAP
+  | HEAP (TOTAL_PAGES)       |
+  |--------------------------|
+
+  - COPY: used when copying data from parent to child
+  - TEMP: used when copying heap from parent to child
+
+*/
+
 /* Memory distribution */
 /***********************/
 

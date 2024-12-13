@@ -310,32 +310,10 @@ int find_empty_pages(page_table_entry* pt, int n, int start) {
   return start;
 }
 
-void print_entry(page_table_entry * pt, unsigned int page) {
-  printf("Entry: %x\n", pt[page].entry);
-  printf("Present: %x\n", pt[page].bits.present);
-  printf("RW: %x\n", pt[page].bits.rw);
-  printf("User: %x\n", pt[page].bits.user);
-  printf("Write through: %x\n", pt[page].bits.write_t);
-  printf("Cache disabled: %x\n", pt[page].bits.cache_d);
-  printf("Accessed: %x\n", pt[page].bits.accessed);
-  printf("Dirty: %x\n", pt[page].bits.dirty);
-  printf("Page size: %x\n", pt[page].bits.ps_pat);
-  printf("Global: %x\n", pt[page].bits.global);
-  printf("Available: %x\n", pt[page].bits.avail);
-  printf("Base address: %x\n", pt[page].bits.pbase_addr);
-}
-
-void print_user_pages(task_struct * task) {
-  page_table_entry * pt = get_PT(task);
-  for (int i = 0; i < TOTAL_PAGES; i++) {
-    printf("====================================\nPage %x\n", i);
-    print_entry(pt, i);
-    printf("====================================\n");
-  }
-}
 
 #define TEMPORAL_START ((PAG_LOG_INIT_CODE+NUM_PAG_CODE)*PAGE_SIZE)
-#define STACKS_START (TEMPORAL_START + NUM_PAG_DATA*PAGE_SIZE)
+#define TEMPORAL_PAGES (NUM_PAG_DATA)
+#define STACKS_START (TEMPORAL_START + TEMPORAL_PAGES*PAGE_SIZE)
 
 /** Allocates `num_pages + 1`:
  * - Stores `num_pages` at the start of the 1st page
