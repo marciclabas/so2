@@ -337,23 +337,23 @@ void print_user_pages(task_struct * task) {
 #define TEMPORAL_START ((PAG_LOG_INIT_CODE+NUM_PAG_CODE)*PAGE_SIZE)
 #define STACKS_START (TEMPORAL_START + NUM_PAG_DATA*PAGE_SIZE)
 
-/** Allocates `num_pages`:
- * - Stores `num_pages` at the start of the block
- * - Returns the address of the first page + 4 (after the size)
+/** Allocates `num_pages + 1`:
+ * - Stores `num_pages` at the start of the 1st page
+ * - Returns the address of the 2nd page
  */
 char* sys_memRegGet(int num_pages) {
   task_struct * curr = current();
   
-  int start_page = find_empty_pages(get_PT(curr), num_pages, STACKS_START >> 12);
-  if (start_page < -1)
+  int page = find_empty_pages(get_PT(curr), num_pages+1, STACKS_START >> 12);
+  if (page < -1)
     return NULL;
 
-  if (alloc_pages(curr, num_pages, start_page) < 0)
+  if (alloc_pages(curr, num_pages+1, page) < 0)
     return NULL;
 
-  char * start = (char*) (start_page << 12);
-  ((int*)start)[0] = num_pages;
-  return start + sizeof(int);
+  ((int*) (page << 12))[0] = num_pages;
+
+  return (char*) ((page+1) << 12);
 }
 
 
@@ -361,10 +361,12 @@ int sys_memRegDel(char* m) {
 
   task_struct * curr = current();
 
-  int start_page = ((int)m) >> 12;
-  int num_pages = ((int*)m)[-1];
+  int data_page = ((int)m) >> 12;
+  int start_page = data_page-1;
+  int num_pages = ((int*) (start_page << 12))[0];
   
-  for (int i = 0; i < num_pages; i++) {
+  
+  for (int i = 0; i < num_pages+1; i++) {
     del_ss_pag(get_PT(curr), start_page + i);
   }
 
