@@ -56,27 +56,31 @@ sem_t* getSem(int id){
 
 int sys_semWait(int id){
 	sem_t* s = getSem(id);
-	if(s == 0 | s->active == 0) return -1;
+	if(s == 0 || s->active == 0) return -1;
 	s->count--;
 	if(s->count < 0){
 		list_add(&current()->list, &s->blocked);
 		sched_next_rr();
 	}
-	if(current()->sem_destroyed == 1) return -1;
+	if(current()->sem_destroyed == 1){
+		current()->sem_destroyed = 0;
+		return -1;
+	}
 	return 1;
 }
 
 int sys_semSignal(int id){
 	sem_t* s = getSem(id);
 	s->count++;
-	
+	//printf("sys_semSignal");
 	if(s->count <= 0 && !list_empty(&s->blocked)){
 		//printf("desbloquejo proces\n");
 		list_head* t = list_pop(&s->blocked);
 		list_add_tail(t, &readyqueue);
-		task_struct* p = list_head_to_sem(t);
+		task_struct* p = list_head_to_task_struct(t);
 		p->sem_destroyed = 0;
 	}
+	//printf("...\n");
 }
 
 int sys_semDestroy(int id){
@@ -88,7 +92,7 @@ int sys_semDestroy(int id){
 	while(!list_empty(&s->blocked)){ //----------------------------> No se si volem ferho aixi o com
 		list_head* t = list_pop(&s->blocked);
 		list_add_tail(t, &readyqueue);
-		task_struct* p = list_head_to_sem(t);
+		task_struct* p = list_head_to_task_struct(t);
 		p->sem_destroyed = 1;
 		list_del(&s->sem_anchor);
 	}
