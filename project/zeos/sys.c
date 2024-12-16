@@ -380,7 +380,10 @@ int sys_unblock(int pid) {
 }
 
 
-int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* parameter) {
+int sys_threadCreateWithStack(
+  void (*function)(void* arg), int N, void* parameter,
+  void (*wrapper_fn)(void (*fn)(void* arg), void* arg)
+) {
   if (list_empty(&freequeue)) {
     printf("Error creating thread: no PCBs available\n");
     return -1;
@@ -412,7 +415,8 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
   unsigned long* user_stack = (unsigned long*) stack_top;
 
   int num_entries = PAGE_SIZE*N/sizeof(unsigned long);
-  user_stack[num_entries-2] = 0;
+  user_stack[num_entries-3] = 0;
+  user_stack[num_entries-2] = function;
   user_stack[num_entries-1] = parameter;
 
   child->TID = new_tid();
@@ -425,9 +429,9 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
   esp[0] = 0; // fake ebp
   esp[1] = (DWord) &ret_from_fork;
   // user eip: 4-th from bottom
-  esp[14] = (unsigned long) function;
+  esp[14] = (unsigned long) wrapper_fn;
   // user esp: 1-th from bottom
-  esp[17] = &user_stack[num_entries-2];
+  esp[17] = &user_stack[num_entries-3];
   
   
 
