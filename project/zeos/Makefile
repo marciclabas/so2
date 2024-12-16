@@ -46,6 +46,7 @@ USROBJ = \
 	utils.o \
 	test.o \
 	dibuixos.o \
+	slab.o \
 	# libjp.a \
 
 all:zeos.bin dump
@@ -85,6 +86,8 @@ sys_call_table.s: sys_call_table.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 test.o:test.c $(INCLUDEDIR)/libc.h
 
 user.o:user.c $(INCLUDEDIR)/libc.h
+
+slab.o:slab.c $(INCLUDEDIR)/slab.h $(INCLUDEDIR)/libc.h
 
 interrupt.o:interrupt.c $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/segment.h $(INCLUDEDIR)/types.h
 
