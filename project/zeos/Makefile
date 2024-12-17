@@ -45,6 +45,7 @@ USROBJ = \
 	wrappers.o \
 	utils.o \
 	test.o \
+	joc.o \
 	dibuixos.o \
 	# libjp.a \
 
@@ -83,6 +84,8 @@ sys_call_table.s: sys_call_table.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
 
 test.o:test.c $(INCLUDEDIR)/libc.h
+
+joc.o:joc.c $(INCLUDEDIR)/libc.h
 
 user.o:user.c $(INCLUDEDIR)/libc.h
 

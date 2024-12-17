@@ -60,7 +60,6 @@ int sys_clrscr(char* b){
     for(int i = 0; i<NUM_ROWS; i++)
       for(int j = 0; j<NUM_COLUMNS; j++)
         printc(' ');
-    printf("hola");
   }
   return 1;
 }

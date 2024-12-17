@@ -19,7 +19,7 @@ void test_screen() {
 		for (int j = 0; j < 25; j++) {
 			screen[i][j] = '0' + (2 << 8);
 		}*/
-	clrscr(mapa);
+	clrscr(map);
 }
 
 void thread(void * arg) {
