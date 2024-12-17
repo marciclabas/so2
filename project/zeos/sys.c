@@ -381,6 +381,12 @@ int sys_unblock(int pid) {
 
 
 int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* parameter) {
+
+  if (N <= 0) {
+    printf("Error creating thread: invalid number of pages\n");
+    return -1;
+  }
+
   if (list_empty(&freequeue)) {
     printf("Error creating thread: no PCBs available\n");
     return -1;
@@ -429,18 +435,11 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
   // user esp: 1-th from bottom
   esp[17] = &user_stack[num_entries-2];
   
-  
-
   INIT_LIST_HEAD(&child->threads_created);
   INIT_LIST_HEAD(&child->children);
   INIT_LIST_HEAD(&child->sems_created);
 
-
-
   child->thread_principal = 0;
-
-
-
   child->thread_parent = parent;
   child->start_page_thread = start_page;
   child->num_pages_thread = N;
