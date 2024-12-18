@@ -116,8 +116,6 @@ void clock_routine() {
   zeos_ticks++;
   zeos_show_clock();
   schedule();
-  
-  
 }
 
 void page_fault_routine2(int access_addr, int instr_addr) {

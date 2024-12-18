@@ -175,10 +175,14 @@ void sched_next_rr() {
 		task_switch((task_union*) idle_task);
 	}
 	else {
+		printf("(");
+		printf("%d , ",current()->TID);
 		list_head * next = list_pop(&readyqueue);
 		task_struct * next_task = list_head_to_task_struct(next);
 		remaining_ticks = get_quantum(next_task);
 		task_switch((task_union*) next_task);
+		printf("%d",current()->TID);
+		printf(")");
 	}
 }
 

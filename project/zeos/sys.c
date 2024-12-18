@@ -33,16 +33,19 @@ void getkey_blocked_reduce_time(){
 	list_for_each_safe(it, it2, &key_blocked){
 		task_struct* task = list_head_to_task_struct(it);
 		task->time_blocked--;
+		
 		if(task->time_blocked <= 0){//Si ha acabat el temps d'espera el desbloquejem
-			list_del(it);
+			/*list_del(it);
 			task->key = -1;
-			list_add_tail(it,&readyqueue);
+			list_add_tail(it,&readyqueue);*/
+			list_del(&task->list);
+			task->key = -1;
+			list_add_tail(&task->list,&readyqueue);
 		}
 	}
 }
 
 int sys_getkey(char* c, int timeout){
-
   char ret = buffer_pop(&keyboard_buffer);
   if(ret == -1) {
     list_add_tail(&current()->list, &key_blocked);
