@@ -86,7 +86,7 @@ void init_idle() {
 	list_head * head = list_pop(&freequeue);
 	task_union * task = (task_union*) list_head_to_task_struct(head);
 	
-	init_pcb(idle_task);
+	init_pcb(&task->task);
 	
 	task->task.PID = 0;
 	task->task.TID = 0;
