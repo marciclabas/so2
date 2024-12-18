@@ -133,9 +133,9 @@ void init_sched() {
 
 void inner_task_switch(task_union * new) {
 	current()->kernel_esp = read_ebp();
+	tss.esp0=(int)&(new->stack[KERNEL_STACK_SIZE]);
+  write_msr(0x175, (unsigned long)&(new->stack[KERNEL_STACK_SIZE]));
 	set_cr3(new->task.dir_pages_baseAddr);
-	tss.esp0 = new->task.kernel_esp;
-	write_msr(0x175, new->task.kernel_esp);
 	ret_task_switch(new->task.kernel_esp);
 }
 
