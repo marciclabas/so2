@@ -1,5 +1,6 @@
 #include <libc.h>
 #include <test.h>
+#include <joc.h>
 
 
 
@@ -28,13 +29,14 @@ void test_dyn_mem() {
 int __attribute__ ((__section__(".text.main")))
   main(void)
 {
-	test_screen();
-  // test_threads();
+  //test_screen();
+  //test_threads();
   //test_dyn_mem();
   //test_exit();
   //test_threads();
   //test_threads_exit();
   //test_sem();
-  //printf("Tornem al main..........\n");
+  game();
+  printf("Tornem al main..........\n");
   while(1);
 }

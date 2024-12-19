@@ -86,6 +86,8 @@ void init_idle() {
 	list_head * head = list_pop(&freequeue);
 	task_union * task = (task_union*) list_head_to_task_struct(head);
 	
+	init_pcb(&task->task);
+	
 	task->task.PID = 0;
 	task->task.TID = 0;
 	allocate_DIR(&task->task);
@@ -98,7 +100,6 @@ void init_idle() {
 	task->task.kernel_esp = (unsigned int) &task->stack[KERNEL_STACK_SIZE-2];
 	
 	idle_task = &task->task;
-	init_pcb(idle_task);
 }
 
 void init_task1() {
@@ -133,9 +134,11 @@ void init_sched() {
 
 void inner_task_switch(task_union * new) {
 	current()->kernel_esp = read_ebp();
-	set_cr3(new->task.dir_pages_baseAddr);
-	tss.esp0 = new->task.kernel_esp;
-	write_msr(0x175, new->task.kernel_esp);
+	tss.esp0=(int)&(new->stack[KERNEL_STACK_SIZE]);
+  write_msr(0x175, (unsigned long)&(new->stack[KERNEL_STACK_SIZE]));
+	if(new->task.PID != current()->PID){
+		set_cr3(new->task.dir_pages_baseAddr);
+	}
 	ret_task_switch(new->task.kernel_esp);
 }
 
@@ -175,6 +178,7 @@ void sched_next_rr() {
 		task_switch((task_union*) idle_task);
 	}
 	else {
+
 		list_head * next = list_pop(&readyqueue);
 		task_struct * next_task = list_head_to_task_struct(next);
 		remaining_ticks = get_quantum(next_task);
