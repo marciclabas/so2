@@ -136,7 +136,9 @@ void inner_task_switch(task_union * new) {
 	current()->kernel_esp = read_ebp();
 	tss.esp0=(int)&(new->stack[KERNEL_STACK_SIZE]);
   write_msr(0x175, (unsigned long)&(new->stack[KERNEL_STACK_SIZE]));
-	set_cr3(new->task.dir_pages_baseAddr);
+	if(new->task.PID != current()->PID){
+		set_cr3(new->task.dir_pages_baseAddr);
+	}
 	ret_task_switch(new->task.kernel_esp);
 }
 
@@ -176,14 +178,11 @@ void sched_next_rr() {
 		task_switch((task_union*) idle_task);
 	}
 	else {
-		printf("(");
-		printf("%d , ",current()->TID);
+
 		list_head * next = list_pop(&readyqueue);
 		task_struct * next_task = list_head_to_task_struct(next);
 		remaining_ticks = get_quantum(next_task);
 		task_switch((task_union*) next_task);
-		printf("%d",current()->TID);
-		printf(")");
 	}
 }
 

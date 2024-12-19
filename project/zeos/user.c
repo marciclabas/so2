@@ -37,6 +37,6 @@ int __attribute__ ((__section__(".text.main")))
   //test_threads_exit();
   //test_sem();
   game();
-  //printf("Tornem al main..........\n");
+  printf("Tornem al main..........\n");
   while(1);
 }
