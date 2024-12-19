@@ -47,6 +47,7 @@ USROBJ = \
 	test.o \
 	joc.o \
 	dibuixos.o \
+	slab.o \
 	# libjp.a \
 
 all:zeos.bin dump
@@ -88,6 +89,8 @@ test.o:test.c $(INCLUDEDIR)/libc.h
 joc.o:joc.c $(INCLUDEDIR)/libc.h
 
 user.o:user.c $(INCLUDEDIR)/libc.h
+
+slab.o:slab.c $(INCLUDEDIR)/slab.h $(INCLUDEDIR)/libc.h
 
 interrupt.o:interrupt.c $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/segment.h $(INCLUDEDIR)/types.h
 

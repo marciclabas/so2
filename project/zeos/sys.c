@@ -383,7 +383,10 @@ int sys_unblock(int pid) {
 }
 
 
-int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* parameter) {
+int sys_threadCreateWithStack(
+  void (*function)(void* arg), int N, void* parameter,
+  void (*wrapper_fn)(void (*fn)(void* arg), void* arg)
+) {
 
   if (N <= 0) {
     printf("Error creating thread: invalid number of pages\n");
@@ -421,7 +424,8 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
   unsigned long* user_stack = (unsigned long*) stack_top;
 
   int num_entries = PAGE_SIZE*N/sizeof(unsigned long);
-  user_stack[num_entries-2] = 0;
+  user_stack[num_entries-3] = 0;
+  user_stack[num_entries-2] = function;
   user_stack[num_entries-1] = parameter;
 
   child->TID = new_tid();
@@ -434,9 +438,9 @@ int sys_threadCreateWithStack(void (*function)(void* arg), int N, void* paramete
   esp[0] = 0; // fake ebp
   esp[1] = (DWord) &ret_from_fork;
   // user eip: 4-th from bottom
-  esp[14] = (unsigned long) function;
+  esp[14] = (unsigned long) wrapper_fn;
   // user esp: 1-th from bottom
-  esp[17] = &user_stack[num_entries-2];
+  esp[17] = &user_stack[num_entries-3];
   
   INIT_LIST_HEAD(&child->threads_created);
   INIT_LIST_HEAD(&child->children);

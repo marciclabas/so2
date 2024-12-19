@@ -45,3 +45,8 @@ void printf(const char *fmt, ...) {
   inner_printf(print, fmt, args);
   va_end(args);
 }
+
+void call_and_exit(void (*function)(void*), void* arg) {
+  function(arg);
+  exit();
+}

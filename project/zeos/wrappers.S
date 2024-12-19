@@ -105,10 +105,34 @@ WRAPPER1(semDestroy, 11)
 WRAPPER3(printc_xy,12)
 WRAPPER0(gettid,13)
 WRAPPER2(getkey, 14)
-WRAPPER3(threadCreateWithStack, 16)
 WRAPPER2(gotoXY, 17)
 WRAPPER2(changeColor,18)
 WRAPPER1(clrscr,19)
 WRAPPER0(getpid, 20)
 WRAPPER1(memRegGet, 21)
 WRAPPER1(memRegDel, 22)
+
+
+
+// WRAPPER3(threadCreateWithStack, 16)
+ENTRY(threadCreateWithStack)
+  pushl %ebx
+  // params
+  movl 8(%esp), %edx
+  movl 12(%esp), %ecx
+  movl 16(%esp), %ebx
+  // pass `call_and_exit`
+  movl $call_and_exit, %esi
+
+  movl $16, %eax
+  pushl $after_threadCreateWithStack
+  pushl %ebp
+  movl %esp, %ebp
+  sysenter
+
+after_threadCreateWithStack:
+  popl %ebp
+  addl $4, %esp
+  popl %ebx
+  call set_errno_eax
+  ret
